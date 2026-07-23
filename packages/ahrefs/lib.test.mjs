@@ -37,6 +37,7 @@ describe('parseKd', () => {
     assert.throws(() => parseKd(101), /kd/i);
     assert.throws(() => parseKd(40.5), /kd/i);
     assert.throws(() => parseKd(''), /kd/i);
+    assert.throws(() => parseKd('   '), /kd/i);
     assert.throws(() => parseKd(null), /kd/i);
   });
 });
