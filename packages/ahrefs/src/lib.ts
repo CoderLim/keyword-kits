@@ -12,11 +12,16 @@ export function normalizeKeyword(raw: unknown): string {
   return keyword;
 }
 
+const COUNTRY_ALIASES: Record<string, string> = {
+  uk: 'gb',
+};
+
 export function normalizeCountry(raw: unknown): string {
-  const country = String(raw ?? 'us').trim().toLowerCase();
+  let country = String(raw ?? 'us').trim().toLowerCase();
+  country = COUNTRY_ALIASES[country] ?? country;
   if (!/^[a-z]{2}$/.test(country)) {
     throw new ArgumentError(
-      `invalid country "${raw}". Use a two-letter code like us, uk, de`,
+      `invalid country "${raw}". Use a two-letter code like us, gb, de (uk maps to gb)`,
     );
   }
   return country;

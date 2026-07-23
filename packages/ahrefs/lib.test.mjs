@@ -16,7 +16,11 @@ describe('normalizeCountry', () => {
   it('defaults to us and lowercases', () => {
     assert.equal(normalizeCountry(undefined), 'us');
     assert.equal(normalizeCountry('US'), 'us');
-    assert.equal(normalizeCountry(' uk '), 'uk');
+    assert.equal(normalizeCountry(' uk '), 'gb');
+  });
+  it('maps uk alias to gb', () => {
+    assert.equal(normalizeCountry('uk'), 'gb');
+    assert.equal(normalizeCountry('UK'), 'gb');
   });
   it('rejects non two-letter codes', () => {
     assert.throws(() => normalizeCountry('usa'), /country/i);

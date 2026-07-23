@@ -161,7 +161,7 @@ OPENCLI_BROWSER_COMMAND_TIMEOUT=180 opencli ahrefs kd "seo tools" --country uk -
 | 参数 | 类型 | 默认 | 说明 |
 |------|------|------|------|
 | `keyword` | string（位置） | — | 要查询的关键词或短语 |
-| `--country` | string | `us` | 两位小写国家码（如 `us`、`uk`、`de`） |
+| `--country` | string | `us` | 两位小写国家码，遵循 Ahrefs（如 `us`、`gb`、`de`）；英国为 `gb`，`uk` 作为别名会映射为 `gb` |
 
 输出列：`keyword`、`country`、`kd`（整数 0–100）
 
