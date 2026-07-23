@@ -1,4 +1,4 @@
-# opencli plugins (sim + google-trends)
+# opencli plugins (sim + google-trends + query-domain)
 
 基于 [opencli](https://github.com/jackwener/OpenCLI) 的插件 monorepo：
 
@@ -6,6 +6,7 @@
 |--------|------|
 | [`packages/sim`](packages/sim) | SimilarWeb（`sim.3ue.com`），需已登录 Chrome |
 | [`packages/google-trends`](packages/google-trends) | Google Trends 扩展，挂到 `opencli google …`（PUBLIC，无需浏览器） |
+| [`packages/query-domain`](packages/query-domain) | query.domains 关键词域名列表，`queryDomain search`，PUBLIC，无需 Chrome |
 
 仓库：https://github.com/CoderLim/keyword-kits
 
@@ -26,7 +27,7 @@ opencli doctor   # 需显示 Everything looks good
 3. Chrome 已安装 [OpenCLI 扩展](https://chromewebstore.google.com/detail/opencli/ildkmabpimmkaediidaifkhjpohdnifk)  
 4. 浏览器中已登录 **https://sim.3ue.com**
 
-**google-trends** 不需要 Chrome。
+**google-trends** 与 **query-domain** 不需要 Chrome。
 
 ---
 
@@ -40,6 +41,7 @@ npm run build
 # monorepo 本地安装需指向子插件目录：
 opencli plugin install file://$(pwd)/packages/sim
 opencli plugin install file://$(pwd)/packages/google-trends
+opencli plugin install file://$(pwd)/packages/query-domain
 ```
 
 从 GitHub monorepo 安装：
@@ -49,6 +51,7 @@ opencli plugin install github:CoderLim/keyword-kits
 # 或只装其中一个：
 opencli plugin install github:CoderLim/keyword-kits/sim
 opencli plugin install github:CoderLim/keyword-kits/google-trends
+opencli plugin install github:CoderLim/keyword-kits/query-domain
 ```
 
 确认：
@@ -57,6 +60,7 @@ opencli plugin install github:CoderLim/keyword-kits/google-trends
 opencli plugin list
 opencli sim --help
 opencli google trendsNow --help
+opencli queryDomain --help
 ```
 
 更新 / 卸载：
@@ -64,8 +68,10 @@ opencli google trendsNow --help
 ```bash
 opencli plugin update sim
 opencli plugin update google-trends
+opencli plugin update query-domain
 opencli plugin uninstall sim
 opencli plugin uninstall google-trends
+opencli plugin uninstall query-domain
 ```
 
 ---
@@ -77,6 +83,7 @@ opencli plugin uninstall google-trends
 | `sim backlinks` | sim | 反向链接 |
 | `sim landing-pages` | sim | 自然着陆页（默认新点击量） |
 | `google trendsNow` | google-trends | Trending Now（支持 geo / status / hours） |
+| `queryDomain search` | query-domain | 关键词相关域名列表（固定 14 TLD） |
 
 官方内置 `google trends`（RSS 日报热搜）仍可用，与本仓库的 `trendsNow` 互不覆盖。
 
@@ -104,6 +111,25 @@ opencli google trendsNow --status ended --hours 48 --limit 50
 输出列：`title`、`volume`、`increase`、`status`、`started`、`ended`、`breakdown`
 
 **分页：** 不支持。接口一次返回当前 `geo`/`hours` 下的全部条目；网页上的翻页是前端切片。本命令只在本地按 `--status` 过滤后再用 `--limit` 截断（没有 `--page` / `--offset`）。要更多结果就加大 `--limit`。
+
+---
+
+## `queryDomain search`
+
+按关键词查询 [query.domains](https://query.domains/) 首页同款域名列表（固定默认 14 个 TLD）。PUBLIC，无需 Chrome。
+
+```bash
+opencli queryDomain search "ai image"
+opencli queryDomain search "ai image" -f json
+```
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| `keyword` | string（位置） | 关键词；多词去空格拼接（`ai image` → `aiimage`） |
+
+输出列：`domain`, `year`, `dr`, `forSale`, `registered`, `expires`, `existed`
+
+遇 HTTP 429 时稍后重试，或在站点登录 / 升级 Pro。
 
 ---
 
@@ -218,9 +244,11 @@ npm install
 npm run build
 opencli plugin install file://$(pwd)/packages/sim
 opencli plugin install file://$(pwd)/packages/google-trends
+opencli plugin install file://$(pwd)/packages/query-domain
 
 opencli google trendsNow --limit 5 -f json
 opencli sim backlinks stripe.com --limit 5 -f json
+opencli queryDomain search "ai image" -f json
 ```
 
 目录结构：
@@ -235,11 +263,17 @@ keyword-kits/
 │   │   ├── package.json
 │   │   ├── src/
 │   │   └── *.js                 # build 产物
-│   └── google-trends/
+│   ├── google-trends/
+│   │   ├── opencli-plugin.json
+│   │   ├── package.json
+│   │   ├── src/trends-now.ts
+│   │   └── trends-now.js
+│   └── query-domain/
 │       ├── opencli-plugin.json
 │       ├── package.json
-│       ├── src/trends-now.ts
-│       └── trends-now.js
+│       ├── src/lib.ts
+│       ├── src/search.ts
+│       └── *.js                 # build 产物
 ├── scripts/
 ├── .cursor/skills/
 ├── README.md
