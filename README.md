@@ -171,7 +171,7 @@ OPENCLI_BROWSER_COMMAND_TIMEOUT=180 opencli sim backlinks stripe.com --limit 10 
 
 ### `sim landing-pages`
 
-查看指定网站的**自然着陆页**（Organic Landing Pages），可看到内页路径与子域名流量分布。经验上配合「新点击量」筛选，容易发现新词 / 新页。
+查看指定网站的**自然着陆页**（Organic Landing Pages），可看到内页路径与子域名流量分布。**默认筛选「新点击量」**（`Change=New`），便于发现新词 / 新页。
 
 **固定默认筛选：**
 
@@ -180,23 +180,24 @@ OPENCLI_BROWSER_COMMAND_TIMEOUT=180 opencli sim backlinks stripe.com --limit 10 
 | duration | `28d` |
 | tab | `Organic`（自然落地页） |
 | webSource | `Total` |
+| change | `New`（新点击量） |
 | includeSubDomains | 页面默认开启 |
 
-对应页面（无点击量变化筛选）：
+对应页面（默认带新点击量）：
 
 ```
-https://sim.3ue.com/#/organicsearch/pageAnalysis/landing-pages-v2/*/999/28d?key={domain}&pageFilter=[{"url":"{domain}","searchType":"domain"}]&webSource=Total&selectedPageTab=Organic
+https://sim.3ue.com/#/organicsearch/pageAnalysis/landing-pages-v2/*/999/28d?key={domain}&pageFilter=[{"url":"{domain}","searchType":"domain"}]&webSource=Total&Change=New&selectedPageTab=Organic
 ```
 
 #### 用法
 
 ```bash
-# 全部自然着陆页
-opencli sim landing-pages pollo.ai
-opencli sim landing-pages pollo.ai --limit 20 -f json
+# 默认即「新点击量」
+opencli sim landing-pages vercel.app
+opencli sim landing-pages vercel.app --limit 20 -f json
 
-# 仅「新点击量」——等价于页面「点击量变化 → 新点击量」
-opencli sim landing-pages vercel.app --change new --limit 20 -f json
+# 查看全部自然着陆页（关闭新点击筛选）
+opencli sim landing-pages pollo.ai --change all --limit 20 -f json
 ```
 
 #### 参数
@@ -205,28 +206,23 @@ opencli sim landing-pages vercel.app --change new --limit 20 -f json
 |------|------|------|------|------|
 | `domain` | string | 是 | — | 域名或 URL（会规范化为 host，去掉 `www.`） |
 | `--limit` | int | 否 | `50` | 返回条数，范围 `1–100` |
-| `--change` | string | 否 | 空（全部） | 点击量变化筛选，见下表 |
+| `--change` | string | 否 | `new` | 点击量变化筛选，见下表 |
 
 #### `--change`（点击量变化）
 
-对应页面筛选项「点击量变化」。当前支持：
+对应页面筛选项「点击量变化」。
 
 | CLI 值 | 页面选项 | URL 参数 | 说明 |
 |--------|----------|----------|------|
-| （留空） | 全部 | 无 `Change` | 不筛选 |
-| `new` | 新点击量 | `Change=New` | 仅新出现点击量的着陆页 |
-
-示例（带 `Change=New`）：
-
-```
-https://sim.3ue.com/#/organicsearch/pageAnalysis/landing-pages-v2/*/999/28d?key=vercel.app&pageFilter=[{"url":"vercel.app","searchType":"domain"}]&webSource=Total&Change=New&selectedPageTab=Organic
-```
+| `new`（默认） | 新点击量 | `Change=New` | 仅新出现点击量的着陆页 |
+| `all` | 全部 | 无 `Change` | 不筛选 |
 
 ```bash
-opencli sim landing-pages vercel.app --change new -f json
+opencli sim landing-pages vercel.app -f json
+opencli sim landing-pages vercel.app --change all -f json
 ```
 
-筛选后 `change` 列通常显示为 `新`（而不是百分比）。
+默认（或 `--change new`）时 `change` 列通常显示为 `新`；`--change all` 时多为百分比（如 `-16%`）。
 
 #### 输出列
 
@@ -236,38 +232,17 @@ opencli sim landing-pages vercel.app --change new -f json
 | `url` | 着陆页 URL / 路径（含子域名，如 `studyreps.vercel.app`） |
 | `clicks` | 点击量（如 `68.2K`） |
 | `clicksShare` | 点击量占比（如 `9.85%`） |
-| `change` | 变动：百分比（如 `-16%`）或 `新`（新点击量筛选时） |
+| `change` | 变动：`新`（新点击量）或百分比（如 `-16%`） |
 | `keywords` | 关键词数量 |
 | `topKeyword` | 热搜关键词 |
 | `serpFeatures` | SERP Features |
 
 #### 示例输出
 
-全部着陆页：
+默认新点击量：
 
 ```bash
-opencli sim landing-pages pollo.ai --limit 2 -f json
-```
-
-```json
-[
-  {
-    "rank": 1,
-    "url": "pollo.ai",
-    "clicks": "68.2K",
-    "clicksShare": "9.85%",
-    "change": "-16%",
-    "keywords": 380,
-    "topKeyword": "pollo ai",
-    "serpFeatures": "-"
-  }
-]
-```
-
-新点击量：
-
-```bash
-opencli sim landing-pages vercel.app --change new --limit 2 -f json
+opencli sim landing-pages vercel.app --limit 2 -f json
 ```
 
 ```json
@@ -280,6 +255,27 @@ opencli sim landing-pages vercel.app --change new --limit 2 -f json
     "change": "新",
     "keywords": 12,
     "topKeyword": "…",
+    "serpFeatures": "-"
+  }
+]
+```
+
+全部着陆页：
+
+```bash
+opencli sim landing-pages pollo.ai --change all --limit 2 -f json
+```
+
+```json
+[
+  {
+    "rank": 1,
+    "url": "pollo.ai",
+    "clicks": "68.2K",
+    "clicksShare": "9.85%",
+    "change": "-16%",
+    "keywords": 380,
+    "topKeyword": "pollo ai",
     "serpFeatures": "-"
   }
 ]
@@ -322,6 +318,11 @@ sim-open-cli/
 ├── backlinks.ts / backlinks.js
 ├── landing-pages.ts / landing-pages.js
 ├── lib/utils.ts
+├── scripts/
+│   ├── subdomain-keywords.mjs
+│   └── google-trends-url.mjs
+├── .cursor/skills/
+│   └── subdomain-keywords/SKILL.md
 ├── README.md
 └── docs/
 ```
@@ -352,6 +353,73 @@ sim-open-cli/
 - [ ] 类似网站 competitive landscape
 - [ ] 出站流量 / 导流网站
 - [ ] 关键词概况与网站关键词
+
+---
+
+## Agent Skills
+
+Cursor Agent Skills 位于 [`.cursor/skills/`](.cursor/skills/)。在对话里用 `/skill-name` 或自然语言触发后，Agent 会按 `SKILL.md` 执行。
+
+### `subdomain-keywords`
+
+路径：[`/.cursor/skills/subdomain-keywords/SKILL.md`](.cursor/skills/subdomain-keywords/SKILL.md)
+
+从托管子域名平台批量发现「新点击」相关英文关键词，并生成 Google Trends 对比链接。
+
+| 项 | 说明 |
+|----|------|
+| 数据源 | `opencli sim landing-pages`（默认 `Change=New`） |
+| 域名 | `vercel.app`、`pages.dev`、`github.io`、`netlify.app`、`web.app`、`firebaseapp.com`、`lovable.app`、`onrender.com` |
+| 每域条数 | 前 10 条 |
+| 字段 | `keyword`、`clicks`、`url` |
+| 过滤 | 关键词去重；点击量 ≥ **2K**；仅英文关键词 |
+| Trends | 最终关键词按点击量降序，**每 5 个一组**生成一条 Trends URL |
+
+触发示例：`/subdomain-keywords`，或「拉一下子域名新词」。
+
+推荐直接跑配套脚本（与 skill 规则一致）：
+
+```bash
+OPENCLI_BROWSER_COMMAND_TIMEOUT=180 npm run subdomain-keywords
+OPENCLI_BROWSER_COMMAND_TIMEOUT=180 npm run subdomain-keywords -- --json
+```
+
+---
+
+## Scripts
+
+仓库脚本在 [`scripts/`](scripts/)。
+
+### `scripts/subdomain-keywords.mjs`
+
+实现 `subdomain-keywords` skill 的可执行流水线：拉取 → 过滤 → 输出关键词表 + Trends URL。
+
+```bash
+OPENCLI_BROWSER_COMMAND_TIMEOUT=180 node scripts/subdomain-keywords.mjs
+OPENCLI_BROWSER_COMMAND_TIMEOUT=180 node scripts/subdomain-keywords.mjs --json
+# 等同：
+OPENCLI_BROWSER_COMMAND_TIMEOUT=180 npm run subdomain-keywords
+```
+
+- stdout：markdown 或 JSON（`--json`）  
+- stderr：各域名拉取进度；失败写入结果里的 `failures`  
+- 前置：已安装 `sim` 插件，且 Chrome 已登录 sim.3ue.com  
+
+### `scripts/google-trends-url.mjs`
+
+由关键词数组生成 Google Trends explore URL。**要求 5 个词**：多于 5 个截断并 `warning`；少于 5 个也会 `warning`，但仍生成 URL。
+
+```bash
+node scripts/google-trends-url.mjs Calculator Converter Translator Generator Example
+# → https://trends.google.com/trends/explore?q=Calculator,Converter,Translator,Generator,Example
+
+node scripts/google-trends-url.mjs --json '["a","b","c","d","e","f"]'
+# warning: got 6 keywords, truncating to 5
+
+echo '["a","b","c","d","e"]' | node scripts/google-trends-url.mjs --stdin
+```
+
+可被其它脚本 `import { buildGoogleTrendsUrl } from './google-trends-url.mjs'` 复用。`subdomain-keywords` 按相同 URL 规则自行分组拼链（每组最多 5 词）。
 
 ---
 

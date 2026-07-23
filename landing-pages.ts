@@ -37,15 +37,15 @@ const CHANGE_FILTERS: Record<string, string> = {
   '新点击量': 'New',
 };
 
-/** Normalize --change; empty means no filter. */
+/** Normalize --change; empty / all means no filter. */
 export function normalizeChange(raw: unknown): string | undefined {
   const input = String(raw ?? '').trim();
-  if (!input) return undefined;
+  if (!input || input === 'all' || input === '全部') return undefined;
   const key = input.toLowerCase() === 'new' ? 'new' : input;
   const mapped = CHANGE_FILTERS[key] ?? CHANGE_FILTERS[input];
   if (!mapped) {
     throw new ArgumentError(
-      `unknown change filter "${input}". Supported: new (新点击量)`,
+      `unknown change filter "${input}". Supported: new (新点击量), all (全部)`,
     );
   }
   return mapped;
@@ -191,7 +191,7 @@ cli({
   site: 'sim',
   name: 'landing-pages',
   access: 'read',
-  description: '查看网站自然着陆页（SimilarWeb / sim.3ue.com，默认 Organic + 28d）',
+  description: '查看网站自然着陆页（默认新点击量 Change=New，Organic + 28d）',
   domain: 'sim.3ue.com',
   strategy: Strategy.UI,
   browser: true,
@@ -212,8 +212,8 @@ cli({
     {
       name: 'change',
       type: 'string',
-      default: '',
-      help: '点击量变化筛选：new（新点击量）；留空为全部',
+      default: 'new',
+      help: '点击量变化：new（新点击量，默认）/ all（全部）',
     },
   ],
   columns: [...COLUMNS],

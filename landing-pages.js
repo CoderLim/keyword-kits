@@ -99,12 +99,12 @@ var CHANGE_FILTERS = {
 };
 function normalizeChange(raw) {
   const input = String(raw ?? "").trim();
-  if (!input) return void 0;
+  if (!input || input === "all" || input === "\u5168\u90E8") return void 0;
   const key = input.toLowerCase() === "new" ? "new" : input;
   const mapped = CHANGE_FILTERS[key] ?? CHANGE_FILTERS[input];
   if (!mapped) {
     throw new ArgumentError2(
-      `unknown change filter "${input}". Supported: new (\u65B0\u70B9\u51FB\u91CF)`
+      `unknown change filter "${input}". Supported: new (\u65B0\u70B9\u51FB\u91CF), all (\u5168\u90E8)`
     );
   }
   return mapped;
@@ -234,7 +234,7 @@ cli({
   site: "sim",
   name: "landing-pages",
   access: "read",
-  description: "\u67E5\u770B\u7F51\u7AD9\u81EA\u7136\u7740\u9646\u9875\uFF08SimilarWeb / sim.3ue.com\uFF0C\u9ED8\u8BA4 Organic + 28d\uFF09",
+  description: "\u67E5\u770B\u7F51\u7AD9\u81EA\u7136\u7740\u9646\u9875\uFF08\u9ED8\u8BA4\u65B0\u70B9\u51FB\u91CF Change=New\uFF0COrganic + 28d\uFF09",
   domain: "sim.3ue.com",
   strategy: Strategy.UI,
   browser: true,
@@ -255,8 +255,8 @@ cli({
     {
       name: "change",
       type: "string",
-      default: "",
-      help: "\u70B9\u51FB\u91CF\u53D8\u5316\u7B5B\u9009\uFF1Anew\uFF08\u65B0\u70B9\u51FB\u91CF\uFF09\uFF1B\u7559\u7A7A\u4E3A\u5168\u90E8"
+      default: "new",
+      help: "\u70B9\u51FB\u91CF\u53D8\u5316\uFF1Anew\uFF08\u65B0\u70B9\u51FB\u91CF\uFF0C\u9ED8\u8BA4\uFF09/ all\uFF08\u5168\u90E8\uFF09"
     }
   ],
   columns: [...COLUMNS],
