@@ -1,6 +1,7 @@
 node_modules/
 *.log
 .DS_Store
+.worktrees/
 
 # opencli 命令编译产物（由 npm run build 从 src/ 生成）
 packages/sim/backlinks.js
