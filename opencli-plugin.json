@@ -1,0 +1,6 @@
+{
+  "name": "sim",
+  "version": "0.1.0",
+  "description": "SimilarWeb via sim.3ue.com",
+  "opencli": ">=1.8.6"
+}

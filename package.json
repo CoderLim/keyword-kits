@@ -1,0 +1,20 @@
+{
+  "name": "opencli-plugin-sim",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "opencli plugin for SimilarWeb (sim.3ue.com)",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/CoderLim/sim-open-cli.git"
+  },
+  "license": "MIT",
+  "peerDependencies": {
+    "@jackwener/opencli": ">=1.8.6"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.1"
+  },
+  "scripts": {
+    "build": "esbuild backlinks.ts --outfile=backlinks.js --format=esm --platform=node"
+  }
+}
