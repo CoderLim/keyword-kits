@@ -80,6 +80,10 @@ describe('parseCount', () => {
     assert.equal(parseCount('12345'), 12345);
     assert.equal(parseCount('12,345'), 12345);
     assert.equal(parseCount(100), 100);
+    assert.equal(parseCount('12.5K'), 12500);
+    assert.equal(parseCount('109K'), 109000);
+    assert.equal(parseCount('1.2M'), 1200000);
+    assert.equal(parseCount('22M'), 22000000);
   });
   it('rejects empty', () => {
     assert.throws(() => parseCount(''), /count|number/i);
@@ -92,6 +96,8 @@ describe('parsePercent', () => {
     assert.equal(parsePercent('67.8%'), 67.8);
     assert.equal(parsePercent('72%'), 72);
     assert.equal(parsePercent(50), 50);
+    assert.equal(parsePercent('67% dofollow'), 67);
+    assert.equal(parsePercent('75% dofollow'), 75);
   });
   it('rejects out of range', () => {
     assert.throws(() => parsePercent('101%'), /percent/i);

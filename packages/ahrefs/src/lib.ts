@@ -100,12 +100,16 @@ export function parseCount(raw: unknown): number {
   }
   const text = String(raw).trim();
   if (!text) throw new ArgumentError('count is required');
-  const cleaned = text.replace(/,/g, '').replace(/[^\d.]+/g, '');
-  const n = Number(cleaned);
+  const m = text.replace(/,/g, '').match(/^([\d.]+)\s*([kmb])?/i);
+  if (!m) throw new ArgumentError(`invalid count: ${raw}`);
+  const n = Number(m[1]);
   if (!Number.isFinite(n) || n < 0) {
     throw new ArgumentError(`invalid count: ${raw}`);
   }
-  return Math.trunc(n);
+  const suf = (m[2] || '').toLowerCase();
+  const mult =
+    suf === 'k' ? 1_000 : suf === 'm' ? 1_000_000 : suf === 'b' ? 1_000_000_000 : 1;
+  return Math.trunc(n * mult);
 }
 
 export function parsePercent(raw: unknown): number {
@@ -118,9 +122,11 @@ export function parsePercent(raw: unknown): number {
     }
     return raw;
   }
-  const text = String(raw).trim().replace(/%/g, '');
+  const text = String(raw).trim();
   if (!text) throw new ArgumentError('percent is required');
-  const n = Number(text);
+  const m = text.match(/(\d+(?:\.\d+)?)\s*%?/);
+  if (!m) throw new ArgumentError(`percent must be 0-100 (got ${raw})`);
+  const n = Number(m[1]);
   if (!Number.isFinite(n) || n < 0 || n > 100) {
     throw new ArgumentError(`percent must be 0-100 (got ${raw})`);
   }
