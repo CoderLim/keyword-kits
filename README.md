@@ -76,6 +76,7 @@ opencli plugin uninstall google-trends
 |------|------|------|
 | `sim backlinks` | sim | 反向链接 |
 | `sim landing-pages` | sim | 自然着陆页（默认新点击量） |
+| `sim keyword-generator` | sim | 关键词生成器（phrase match，可筛 volume/CPC/难度） |
 | `google trendsNow` | google-trends | Trending Now（支持 geo / status / hours） |
 
 官方内置 `google trends`（RSS 日报热搜）仍可用，与本仓库的 `trendsNow` 互不覆盖。
@@ -189,6 +190,70 @@ opencli sim landing-pages pollo.ai --change all --limit 20 -f json
 
 ---
 
+## `sim keyword-generator`
+
+SimilarWeb **关键词生成器**（phrase match）。输入种子词，返回相关关键词及搜索量 / CPC / 难度；支持本地下限/上限筛选，并自动翻页直到凑满 `--limit`。
+
+**固定默认筛选（一期不暴露为参数）：**
+
+| 项 | 值 |
+|----|-----|
+| tab | `phraseMatch` |
+| duration | `28d` |
+| webSource | `Total` |
+| isWWW | `*` |
+
+对应页面：
+
+```
+https://sim.3ue.com/#/digitalsuite/acquisition/findkeywords/keyword-generator-tool/999/28d
+  ?searchEngine=google&keyword={keyword}&webSource=Total&isWWW=*&tab=phraseMatch
+```
+
+#### 用法
+
+```bash
+OPENCLI_BROWSER_COMMAND_TIMEOUT=180 opencli sim keyword-generator dice --limit 5 -f json
+OPENCLI_BROWSER_COMMAND_TIMEOUT=180 opencli sim keyword-generator dice --min-volume 1000 --max-difficulty 50 --limit 20 -f json
+opencli sim keyword-generator dice --engine google --min-cpc 0.5 --limit 50 -f json
+```
+
+#### 参数
+
+| 参数 | 类型 | 必填 | 默认 | 说明 |
+|------|------|------|------|------|
+| `keyword` | string | 是 | — | 种子词（位置参数） |
+| `--engine` | string | 否 | `google` | 搜索引擎 |
+| `--min-volume` | float | 否 | 不限 | 搜索量下限 |
+| `--min-cpc` | float | 否 | 不限 | CPC 下限 |
+| `--max-difficulty` | float | 否 | 不限 | 难度上限 |
+| `--limit` | int | 否 | `50` | 返回条数，范围 `1–100` |
+
+#### 输出列
+
+| 列 | 含义 |
+|----|------|
+| `keyword` | 关键词 |
+| `volume` | 搜索量 |
+| `cpc` | CPC |
+| `difficulty` | 关键词难度 |
+
+**分页：** 自动翻页（最多约 20 页），直到结果数 ≥ `--limit` 或没有下一页。筛选项写入 deep link query，并在本地再过滤兜底。
+
+页面较慢时可提高超时：
+
+```bash
+OPENCLI_BROWSER_COMMAND_TIMEOUT=180 opencli sim keyword-generator dice --limit 10 -f json
+```
+
+设计 / 侦察：
+
+- [`docs/superpowers/specs/2026-07-23-sim-keyword-generator-design.md`](docs/superpowers/specs/2026-07-23-sim-keyword-generator-design.md)
+- [`docs/superpowers/specs/2026-07-23-sim-keyword-generator-recon-notes.md`](docs/superpowers/specs/2026-07-23-sim-keyword-generator-recon-notes.md)
+- [`docs/superpowers/plans/2026-07-23-sim-keyword-generator.md`](docs/superpowers/plans/2026-07-23-sim-keyword-generator.md)
+
+---
+
 ## 实现说明
 
 ### sim
@@ -208,6 +273,9 @@ opencli sim landing-pages pollo.ai --change all --limit 20 -f json
 
 - [`docs/superpowers/specs/2026-07-23-sim-backlinks-design.md`](docs/superpowers/specs/2026-07-23-sim-backlinks-design.md)
 - [`docs/superpowers/plans/2026-07-23-sim-backlinks.md`](docs/superpowers/plans/2026-07-23-sim-backlinks.md)
+- [`docs/superpowers/specs/2026-07-23-sim-keyword-generator-design.md`](docs/superpowers/specs/2026-07-23-sim-keyword-generator-design.md)
+- [`docs/superpowers/specs/2026-07-23-sim-keyword-generator-recon-notes.md`](docs/superpowers/specs/2026-07-23-sim-keyword-generator-recon-notes.md)
+- [`docs/superpowers/plans/2026-07-23-sim-keyword-generator.md`](docs/superpowers/plans/2026-07-23-sim-keyword-generator.md)
 
 ---
 
