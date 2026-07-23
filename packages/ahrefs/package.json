@@ -1,0 +1,17 @@
+{
+  "name": "opencli-plugin-ahrefs",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "opencli plugin: Ahrefs free Keyword Difficulty Checker (ahrefs kd)",
+  "license": "MIT",
+  "peerDependencies": {
+    "@jackwener/opencli": ">=1.8.6"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.1"
+  },
+  "scripts": {
+    "build": "npx esbuild src/lib.ts --outfile=lib.js --format=esm --platform=node && npx esbuild src/kd.ts --bundle --outfile=kd.js --format=esm --platform=node --packages=external",
+    "test": "npm run build && node --test lib.test.mjs"
+  }
+}

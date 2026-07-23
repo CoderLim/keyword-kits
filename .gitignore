@@ -10,3 +10,5 @@ packages/sim/keyword-generator.js
 packages/google-trends/trends-now.js
 packages/query-domain/lib.js
 packages/query-domain/search.js
+packages/ahrefs/lib.js
+packages/ahrefs/kd.js
