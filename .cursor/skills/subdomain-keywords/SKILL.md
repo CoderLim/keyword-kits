@@ -17,7 +17,7 @@ description: >-
 ## 前置
 
 1. `opencli doctor` 通过  
-2. 已安装 **sim** 子插件：`opencli plugin install file://$(pwd)/packages/sim` 或 `github:CoderLim/sim-open-cli/sim`  
+2. 已安装 **sim** 子插件：`opencli plugin install file://$(pwd)/packages/sim` 或 `github:CoderLim/keyword-kits/sim`  
 3. Chrome 已登录 `https://sim.3ue.com`
 
 ## 目标域名（固定）

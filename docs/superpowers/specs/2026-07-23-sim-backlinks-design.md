@@ -28,7 +28,7 @@ opencli sim backlinks <domain> [--limit N]
 ## 3. Architecture
 
 ```
-sim-api (repo)
+keyword-kits (repo)
 ├── opencli-plugin.json      # plugin manifest, name: sim
 ├── package.json             # peer: @jackwener/opencli
 ├── backlinks.ts             # Strategy: COOKIE / PAGE_FETCH（侦察后定稿）
@@ -39,7 +39,7 @@ sim-api (repo)
 安装：
 
 ```bash
-opencli plugin install file:///Users/coderlim/Projects/sim-api
+opencli plugin install file:///Users/coderlim/Projects/keyword-kits
 opencli sim backlinks example.com -f json
 ```
 

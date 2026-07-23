@@ -7,7 +7,7 @@
 | [`packages/sim`](packages/sim) | SimilarWeb（`sim.3ue.com`），需已登录 Chrome |
 | [`packages/google-trends`](packages/google-trends) | Google Trends 扩展，挂到 `opencli google …`（PUBLIC，无需浏览器） |
 
-仓库：https://github.com/CoderLim/sim-open-cli
+仓库：https://github.com/CoderLim/keyword-kits
 
 ---
 
@@ -33,8 +33,8 @@ opencli doctor   # 需显示 Everything looks good
 ## 安装
 
 ```bash
-git clone https://github.com/CoderLim/sim-open-cli.git
-cd sim-open-cli
+git clone https://github.com/CoderLim/keyword-kits.git
+cd keyword-kits
 npm install
 npm run build
 # monorepo 本地安装需指向子插件目录：
@@ -45,10 +45,10 @@ opencli plugin install file://$(pwd)/packages/google-trends
 从 GitHub monorepo 安装：
 
 ```bash
-opencli plugin install github:CoderLim/sim-open-cli
+opencli plugin install github:CoderLim/keyword-kits
 # 或只装其中一个：
-opencli plugin install github:CoderLim/sim-open-cli/sim
-opencli plugin install github:CoderLim/sim-open-cli/google-trends
+opencli plugin install github:CoderLim/keyword-kits/sim
+opencli plugin install github:CoderLim/keyword-kits/google-trends
 ```
 
 确认：
@@ -226,7 +226,7 @@ opencli sim backlinks stripe.com --limit 5 -f json
 目录结构：
 
 ```
-sim-open-cli/
+keyword-kits/
 ├── opencli-plugin.json          # monorepo plugins 声明
 ├── package.json                 # workspaces
 ├── packages/

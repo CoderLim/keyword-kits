@@ -5,7 +5,7 @@
   "description": "OpenCLI plugin monorepo: sim + google-trends",
   "repository": {
     "type": "git",
-    "url": "https://github.com/CoderLim/sim-open-cli.git"
+    "url": "https://github.com/CoderLim/keyword-kits.git"
   },
   "license": "MIT",
   "workspaces": [

@@ -19,7 +19,7 @@ description: >-
 1. `opencli doctor` 通过（本命令为 PUBLIC，一般不需要 Chrome）
 2. 已安装 **google-trends** 子插件：  
    `opencli plugin install file://$(pwd)/packages/google-trends`  
-   或 `github:CoderLim/sim-open-cli/google-trends`
+   或 `github:CoderLim/keyword-kits/google-trends`
 3. 确认命令可用：`opencli google trendsNow --help`
 
 ## 拉取热词
