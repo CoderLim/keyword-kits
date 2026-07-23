@@ -15,6 +15,6 @@
     "esbuild": "^0.28.1"
   },
   "scripts": {
-    "build": "esbuild backlinks.ts --outfile=backlinks.js --format=esm --platform=node"
+    "build": "npx esbuild backlinks.ts --outfile=backlinks.js --format=esm --platform=node && npx esbuild landing-pages.ts --bundle --outfile=landing-pages.js --format=esm --platform=node --packages=external"
   }
 }
