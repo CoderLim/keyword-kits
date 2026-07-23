@@ -3,5 +3,6 @@ node_modules/
 .DS_Store
 
 # opencli 命令编译产物（由 npm run build 从 src/ 生成）
-/backlinks.js
-/landing-pages.js
+packages/sim/backlinks.js
+packages/sim/landing-pages.js
+packages/google-trends/trends-now.js

@@ -1,0 +1,6 @@
+{
+  "name": "google-trends",
+  "version": "0.1.0",
+  "description": "Google Trends extensions for opencli (trendsNow)",
+  "opencli": ">=1.8.6"
+}

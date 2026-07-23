@@ -1,0 +1,16 @@
+{
+  "name": "opencli-plugin-google-trends",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "opencli plugin: Google Trends Trending Now (google trendsNow)",
+  "license": "MIT",
+  "peerDependencies": {
+    "@jackwener/opencli": ">=1.8.6"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.1"
+  },
+  "scripts": {
+    "build": "npx esbuild src/trends-now.ts --outfile=trends-now.js --format=esm --platform=node"
+  }
+}

@@ -1,21 +1,21 @@
 {
-  "name": "opencli-plugin-sim",
-  "version": "0.1.0",
-  "type": "module",
-  "description": "opencli plugin for SimilarWeb (sim.3ue.com)",
+  "name": "opencli-plugins",
+  "version": "0.2.0",
+  "private": true,
+  "description": "OpenCLI plugin monorepo: sim + google-trends",
   "repository": {
     "type": "git",
     "url": "https://github.com/CoderLim/sim-open-cli.git"
   },
   "license": "MIT",
-  "peerDependencies": {
-    "@jackwener/opencli": ">=1.8.6"
-  },
-  "devDependencies": {
-    "esbuild": "^0.28.1"
-  },
+  "workspaces": [
+    "packages/sim",
+    "packages/google-trends"
+  ],
   "scripts": {
-    "build": "npx esbuild src/backlinks.ts --outfile=backlinks.js --format=esm --platform=node && npx esbuild src/landing-pages.ts --bundle --outfile=landing-pages.js --format=esm --platform=node --packages=external",
+    "build": "npm run build -w opencli-plugin-sim && npm run build -w opencli-plugin-google-trends",
+    "build:sim": "npm run build -w opencli-plugin-sim",
+    "build:google-trends": "npm run build -w opencli-plugin-google-trends",
     "subdomain-keywords": "node scripts/subdomain-keywords.mjs"
   }
 }

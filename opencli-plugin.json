@@ -1,6 +1,9 @@
 {
-  "name": "sim",
-  "version": "0.1.0",
-  "description": "SimilarWeb via sim.3ue.com (backlinks, landing-pages)",
-  "opencli": ">=1.8.6"
+  "version": "0.2.0",
+  "opencli": ">=1.8.6",
+  "description": "OpenCLI plugins: SimilarWeb (sim) + Google Trends extensions (google-trends)",
+  "plugins": {
+    "sim": { "path": "packages/sim" },
+    "google-trends": { "path": "packages/google-trends" }
+  }
 }
