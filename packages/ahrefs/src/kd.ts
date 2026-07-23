@@ -28,6 +28,7 @@ import { normalizeCountry, normalizeKeyword, parseKd, toRows } from './lib.js';
 
 const PAGE_URL = 'https://ahrefs.com/keyword-difficulty';
 const LOAD_TIMEOUT_SEC = 90;
+const DEEP_LINK_BUDGET_MS = 55_000;
 
 function buildDeepLink(keyword: string, country: string): string {
   return (
@@ -167,7 +168,7 @@ cli({
     const deepLink = buildDeepLink(keyword, country);
     const deadline = Date.now() + LOAD_TIMEOUT_SEC * 1000;
     // Give deep-link most of the budget; reserve time for manual fill fallback
-    const deepLinkDeadline = Math.min(deadline, Date.now() + 55_000);
+    const deepLinkDeadline = Math.min(deadline, Date.now() + DEEP_LINK_BUDGET_MS);
 
     await openUrl(page, deepLink);
 
@@ -178,12 +179,17 @@ cli({
       await page.evaluate(DISMISS_COOKIE_JS).catch(() => false);
       let submitStatus = String(await page.evaluate(FALLBACK_SUBMIT_JS(keyword)));
       if (submitStatus === 'no-input' || submitStatus === 'no-button') {
-        await openUrl(page, PAGE_URL);
+        await openUrl(page, deepLink);
         await page.wait(1);
         await page.evaluate(DISMISS_COOKIE_JS).catch(() => false);
         submitStatus = String(await page.evaluate(FALLBACK_SUBMIT_JS(keyword)));
       }
-      void submitStatus;
+      if (submitStatus !== 'clicked') {
+        throw new EmptyResultError(
+          'ahrefs kd',
+          `Submit failed / form controls missing for "${keyword}" (${country}): ${submitStatus}`,
+        );
+      }
       result = await pollForKd(page, deadline);
     }
 
