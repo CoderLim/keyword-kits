@@ -61,6 +61,8 @@ import {
 const PAGE_URL = 'https://ahrefs.com/backlink-checker';
 const MODE = 'subdomains';
 const LOAD_TIMEOUT_SEC = 90;
+/** Extra wait after summary ready for table rows to settle (within overall deadline). */
+const TABLE_STABLE_MAX_MS = 8_000;
 
 function buildDeepLink(domain: string): string {
   return (
@@ -200,6 +202,16 @@ const PAGE_STATUS_JS = `(() => {
   return JSON.stringify({ status: 'ready', summary, links });
 })()`;
 
+/** Count tbody rows in the Backlink profile modal (0 if modal/table missing). */
+const TABLE_ROW_COUNT_JS = `(() => {
+  const portal = [...document.querySelectorAll('.ReactModalPortal')]
+    .find((el) => /Backlink profile for/i.test(el.innerText || ''));
+  if (!portal) return 0;
+  const table = portal.querySelector('table');
+  if (!table) return 0;
+  return table.querySelectorAll('tbody tr').length;
+})()`;
+
 async function openUrl(
   page: {
     newTab?: (url?: string) => Promise<string | undefined>;
@@ -242,6 +254,21 @@ type PollResult = {
   links?: RawLink[];
 };
 
+async function evaluatePageStatus(page: {
+  evaluate: (js: string) => Promise<unknown>;
+}): Promise<PollResult> {
+  const raw = await page.evaluate(PAGE_STATUS_JS);
+  try {
+    const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    if (parsed && typeof parsed === 'object' && 'status' in parsed) {
+      return parsed as PollResult;
+    }
+  } catch {
+    /* ignore */
+  }
+  return { status: 'loading' };
+}
+
 async function pollForBacklinks(
   page: {
     evaluate: (js: string) => Promise<unknown>;
@@ -252,21 +279,35 @@ async function pollForBacklinks(
   let last: PollResult = { status: 'loading' };
   while (Date.now() < deadline) {
     await page.evaluate(DISMISS_COOKIE_JS).catch(() => false);
-    const raw = await page.evaluate(PAGE_STATUS_JS);
-    try {
-      const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
-      if (parsed && typeof parsed === 'object' && 'status' in parsed) {
-        last = parsed as PollResult;
-      }
-    } catch {
-      last = { status: 'loading' };
-    }
+    last = await evaluatePageStatus(page);
     if (last.status === 'ready' || last.status === 'auth' || last.status === 'challenge') {
       return last;
     }
     await page.wait(0.5);
   }
   return last;
+}
+
+/**
+ * After summary is ready, wait until tbody tr count is unchanged across two
+ * consecutive polls (0.5s apart), or until a short max wait / overall deadline.
+ * Empty (stable 0) is OK — table may truly have no rows.
+ */
+async function waitForTableStable(
+  page: {
+    evaluate: (js: string) => Promise<unknown>;
+    wait: (sec: number) => Promise<unknown>;
+  },
+  deadline: number,
+): Promise<void> {
+  const tableDeadline = Math.min(deadline, Date.now() + TABLE_STABLE_MAX_MS);
+  let prev: number | null = null;
+  while (Date.now() < tableDeadline) {
+    const count = Number(await page.evaluate(TABLE_ROW_COUNT_JS)) || 0;
+    if (prev !== null && count === prev) return;
+    prev = count;
+    await page.wait(0.5);
+  }
 }
 
 function mapSummary(domain: string, raw: RawSummary | undefined): BacklinksSummary {
@@ -362,14 +403,18 @@ cli({
       await page.evaluate(DISMISS_COOKIE_JS).catch(() => false);
       submitStatus = String(await page.evaluate(CLICK_CHECK_JS));
     }
+    if (submitStatus === 'no-button' || submitStatus === 'no-input') {
+      throw new CommandExecutionError(
+        `Ahrefs Backlink Checker UI controls missing for "${domain}" (${submitStatus}). Page may have changed.`,
+      );
+    }
     if (submitStatus !== 'clicked') {
-      throw new EmptyResultError(
-        'ahrefs backlinks',
-        `Submit failed / "Check backlinks" missing for "${domain}": ${submitStatus}`,
+      throw new CommandExecutionError(
+        `Failed to click "Check backlinks" for "${domain}": ${submitStatus}`,
       );
     }
 
-    const result = await pollForBacklinks(page, deadline);
+    let result = await pollForBacklinks(page, deadline);
 
     if (result.status === 'auth') {
       throw new CommandExecutionError(
@@ -389,6 +434,13 @@ cli({
         'ahrefs backlinks',
         `No backlink profile returned for "${domain}"`,
       );
+    }
+
+    // Summary can appear before table rows finish rendering — wait for stable tbody.
+    await waitForTableStable(page, deadline);
+    const refreshed = await evaluatePageStatus(page);
+    if (refreshed.status === 'ready') {
+      result = refreshed;
     }
 
     const summary = mapSummary(domain, result.summary);
