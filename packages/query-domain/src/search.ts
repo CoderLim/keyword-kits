@@ -10,7 +10,7 @@
  * Browser: false
  */
 
-import { CliError, EmptyResultError } from '@jackwener/opencli/errors';
+import { CliError } from '@jackwener/opencli/errors';
 import { cli, Strategy } from '@jackwener/opencli/registry';
 import {
   buildDomains,
@@ -122,10 +122,6 @@ cli({
     const domains = buildDomains(label);
     const metaMap = await fetchCheckSse(domains);
     const drMap = await fetchDrMap(domains);
-    const rows = toRows(domains, metaMap, drMap);
-    if (!rows.length) {
-      throw new EmptyResultError('queryDomain search', `No domains for keyword "${label}"`);
-    }
-    return rows;
+    return toRows(domains, metaMap, drMap);
   },
 });

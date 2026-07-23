@@ -1,7 +1,7 @@
 # queryDomain search — Design Spec
 
 **Date:** 2026-07-23  
-**Status:** Draft for review  
+**Status:** Implemented  
 **Scope:** 第一期 — 按关键词查询 query.domains 域名列表（固定默认 TLD）
 
 ## 1. Goal
@@ -78,7 +78,7 @@ domains = DEFAULT_TLDS.map(tld => `${label}.${tld}`)
 com, ai, org, net, cn, info, app, io, xyz, co, run, me, pro, top
 ```
 
-空关键词 / 规范化后 `label` 为空 → `INVALID_ARGUMENT`。
+空关键词 / 规范化后 `label` 为空 → opencli `ArgumentError` → `ARGUMENT`（exit 2）。
 
 ### 3.3 Upstream APIs
 
@@ -139,10 +139,9 @@ GET https://query.domains/api/dr?domain={comma-separated}
 
 | Code | When |
 |------|------|
-| `INVALID_ARGUMENT` | keyword 为空或规范化后 label 为空 |
+| `ARGUMENT`（exit 2） | keyword 为空或规范化后 label 为空（opencli `ArgumentError`） |
 | `FETCH_ERROR` | 网络失败 / 非预期 HTTP（非 429） |
 | `CliError`（如 `RATE_LIMITED` / `FETCH_ERROR`） | HTTP 429；文案提示稍后重试或登录 Pro |
-| `EmptyResultError` | 流结束且无任何域名结果（异常情况） |
 
 ## 5. Data flow
 
