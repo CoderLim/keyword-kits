@@ -1,0 +1,6 @@
+{
+  "name": "namecheap",
+  "version": "0.1.0",
+  "description": "Namecheap domain control (set-nameserver)",
+  "opencli": ">=1.8.6"
+}

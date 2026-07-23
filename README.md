@@ -1,4 +1,4 @@
-# opencli plugins (sim + google-trends + query-domain + ahrefs)
+# opencli plugins (sim + google-trends + query-domain + ahrefs + namecheap)
 
 基于 [opencli](https://github.com/jackwener/OpenCLI) 的插件 monorepo：
 
@@ -8,6 +8,7 @@
 | [`packages/google-trends`](packages/google-trends) | Google Trends 扩展，挂到 `opencli google …`（PUBLIC，无需浏览器） |
 | [`packages/query-domain`](packages/query-domain) | query.domains 关键词域名列表，`queryDomain search`，PUBLIC，无需 Chrome |
 | [`packages/ahrefs`](packages/ahrefs) | Ahrefs 免费 KD（Keyword Difficulty），尽量免登录；需 Chrome Bridge（Strategy.UI） |
+| [`packages/namecheap`](packages/namecheap) | Namecheap 域名 Custom DNS nameserver 设置，需已登录 Chrome |
 
 仓库：https://github.com/CoderLim/keyword-kits
 
@@ -23,13 +24,17 @@ npm install -g @jackwener/opencli
 opencli doctor   # 需显示 Everything looks good
 ```
 
-对 **sim** 与 **ahrefs** 额外需要：
+对 **sim**、**ahrefs** 与 **namecheap** 额外需要：
 
 3. Chrome 已安装 [OpenCLI 扩展](https://chromewebstore.google.com/detail/opencli/ildkmabpimmkaediidaifkhjpohdnifk)  
 
 对 **sim** 还需：
 
 4. 浏览器中已登录 **https://sim.3ue.com**
+
+对 **namecheap** 还需：
+
+5. 浏览器中已登录 **https://ap.www.namecheap.com**
 
 **ahrefs** 只需 Chrome Bridge，**不需要** Ahrefs 账号登录。
 
@@ -49,6 +54,7 @@ opencli plugin install file://$(pwd)/packages/sim
 opencli plugin install file://$(pwd)/packages/google-trends
 opencli plugin install file://$(pwd)/packages/query-domain
 opencli plugin install file://$(pwd)/packages/ahrefs
+opencli plugin install file://$(pwd)/packages/namecheap
 ```
 
 从 GitHub monorepo 安装：
@@ -60,6 +66,7 @@ opencli plugin install github:CoderLim/keyword-kits/sim
 opencli plugin install github:CoderLim/keyword-kits/google-trends
 opencli plugin install github:CoderLim/keyword-kits/query-domain
 opencli plugin install github:CoderLim/keyword-kits/ahrefs
+opencli plugin install github:CoderLim/keyword-kits/namecheap
 ```
 
 确认：
@@ -70,6 +77,7 @@ opencli sim --help
 opencli google trendsNow --help
 opencli queryDomain --help
 opencli ahrefs kd --help
+opencli namecheap set-nameserver --help
 ```
 
 更新 / 卸载：
@@ -79,10 +87,12 @@ opencli plugin update sim
 opencli plugin update google-trends
 opencli plugin update query-domain
 opencli plugin update ahrefs
+opencli plugin update namecheap
 opencli plugin uninstall sim
 opencli plugin uninstall google-trends
 opencli plugin uninstall query-domain
 opencli plugin uninstall ahrefs
+opencli plugin uninstall namecheap
 ```
 
 ---
@@ -97,6 +107,7 @@ opencli plugin uninstall ahrefs
 | `google trendsNow` | google-trends | Trending Now（支持 geo / status / hours） |
 | `queryDomain search` | query-domain | 关键词相关域名列表（固定 14 TLD） |
 | `ahrefs kd` | ahrefs | 免费 Keyword Difficulty |
+| `namecheap set-nameserver` | namecheap | 设置域名 Custom DNS nameservers |
 
 官方内置 `google trends`（RSS 日报热搜）仍可用，与本仓库的 `trendsNow` 互不覆盖。
 
@@ -181,6 +192,32 @@ OPENCLI_BROWSER_COMMAND_TIMEOUT=180 opencli ahrefs kd "keyword research" -f json
 
 - [`docs/superpowers/specs/2026-07-23-ahrefs-kd-design.md`](docs/superpowers/specs/2026-07-23-ahrefs-kd-design.md)
 - [`docs/superpowers/plans/2026-07-23-ahrefs-kd.md`](docs/superpowers/plans/2026-07-23-ahrefs-kd.md)
+
+---
+
+## `namecheap set-nameserver`
+
+把 Namecheap 域名的 Nameservers 切到 **Custom DNS** 并写入指定 NS。需 Chrome Bridge，且浏览器已登录 Namecheap。
+
+```bash
+opencli namecheap set-nameserver 73-9.org --ns ns1.cloudflare.com,ns2.cloudflare.com
+opencli namecheap set-nameserver 73-9.org --ns "ns1.cloudflare.com ns2.cloudflare.com" -f json
+```
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| `domain` | string（位置） | 域名，如 `73-9.org` |
+| `--ns` | string | 逗号/空白分隔的 nameserver 列表，至少 2 个 |
+
+输出列：`domain`、`nameserver`、`index`、`status`、`message`
+
+对应页面：
+
+```
+https://ap.www.namecheap.com/domains/domaincontrolpanel/{domain}/domain
+```
+
+DNS 生效可能需要最多 48 小时。
 
 ---
 

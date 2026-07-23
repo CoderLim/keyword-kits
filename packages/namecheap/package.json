@@ -1,0 +1,17 @@
+{
+  "name": "opencli-plugin-namecheap",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "opencli plugin: Namecheap domain nameserver management",
+  "license": "MIT",
+  "peerDependencies": {
+    "@jackwener/opencli": ">=1.8.6"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.1"
+  },
+  "scripts": {
+    "build": "npx esbuild src/lib.ts --outfile=lib.js --format=esm --platform=node && npx esbuild src/set-nameserver.ts --bundle --outfile=set-nameserver.js --format=esm --platform=node --packages=external",
+    "test": "npm run build && node --test lib.test.mjs"
+  }
+}
