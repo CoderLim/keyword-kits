@@ -33,14 +33,21 @@ opencli doctor   # 需显示 Everything looks good
 ### 从 GitHub 安装（推荐）
 
 ```bash
-opencli plugin install github:CoderLim/sim-open-cli
+git clone https://github.com/CoderLim/sim-open-cli.git
+cd sim-open-cli
+npm install
+npm run build    # 生成根目录 backlinks.js / landing-pages.js
+opencli plugin install file://$(pwd)
 ```
+
+或安装后在插件目录内 build（`opencli plugin install github:CoderLim/sim-open-cli` 后进入 `~/.opencli/plugins/sim` 执行 `npm install && npm run build`）。
 
 ### 从本地目录安装（开发）
 
 ```bash
 git clone https://github.com/CoderLim/sim-open-cli.git
 cd sim-open-cli
+npm install && npm run build
 opencli plugin install file://$(pwd)
 ```
 
@@ -288,7 +295,8 @@ opencli sim landing-pages pollo.ai --change all --limit 2 -f json
 - **策略**：`Strategy.UI`（页面表格刮取）  
 - **原因**：`sim.3ue.com` 为 GMITM 镜像；站内 JSON 在页面上下文中难以稳定复放  
 - **导航**：使用 `page.newTab(url)` 打开深链（同域仅改 hash 不会正确 remount SPA）  
-- **源码**：`backlinks.ts` / `landing-pages.ts`（共享 `lib/utils.ts`）；运行时加载预编译 `.js`
+- **源码**：`src/backlinks.ts` / `src/landing-pages.ts`（共享 `src/lib/utils.ts`）  
+- **产物**：根目录 `backlinks.js` / `landing-pages.js`（`npm run build` 生成，**不入库**；opencli 只加载插件根目录下的命令文件）
 
 更细的设计与计划见：
 
@@ -303,7 +311,7 @@ opencli sim landing-pages pollo.ai --change all --limit 2 -f json
 git clone https://github.com/CoderLim/sim-open-cli.git
 cd sim-open-cli
 npm install
-npm run build
+npm run build          # src/*.ts → 根目录 *.js
 opencli plugin install file://$(pwd)
 opencli sim backlinks stripe.com --limit 5 -f json
 opencli sim landing-pages pollo.ai --limit 5 -f json
@@ -315,9 +323,12 @@ opencli sim landing-pages pollo.ai --limit 5 -f json
 sim-open-cli/
 ├── opencli-plugin.json
 ├── package.json
-├── backlinks.ts / backlinks.js
-├── landing-pages.ts / landing-pages.js
-├── lib/utils.ts
+├── backlinks.js              # npm run build 生成（gitignore）
+├── landing-pages.js          # 同上
+├── src/
+│   ├── backlinks.ts
+│   ├── landing-pages.ts
+│   └── lib/utils.ts
 ├── scripts/
 │   ├── subdomain-keywords.mjs
 │   └── google-trends-url.mjs
@@ -327,7 +338,7 @@ sim-open-cli/
 └── docs/
 ```
 
-修改 TypeScript 后务必重新 `npm run build`，再跑命令验证。
+修改 `src/` 下 TypeScript 后务必重新 `npm run build`，再跑命令验证。
 
 ---
 
