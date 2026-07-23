@@ -1,6 +1,6 @@
 {
   "name": "ahrefs",
   "version": "0.1.0",
-  "description": "Ahrefs free Keyword Difficulty Checker (ahrefs kd)",
+  "description": "Ahrefs free Keyword Difficulty Checker (kd) and Backlink Checker (backlinks)",
   "opencli": ">=1.8.6"
 }
