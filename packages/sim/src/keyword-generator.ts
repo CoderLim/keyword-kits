@@ -207,11 +207,19 @@ cli({
       if (accumulated.length >= limit) break;
 
       const stateRaw = await page.evaluate(PAGINATION_STATE_JS);
-      const state = typeof stateRaw === 'string' ? JSON.parse(stateRaw) : stateRaw;
+      let state: { hasNext?: boolean } = { hasNext: false };
+      try {
+        state =
+          typeof stateRaw === 'string'
+            ? (JSON.parse(stateRaw) as { hasNext?: boolean })
+            : ((stateRaw as { hasNext?: boolean } | null | undefined) ?? { hasNext: false });
+      } catch {
+        state = { hasNext: false };
+      }
       if (!state?.hasNext) break;
 
       const clicked = await page.evaluate(CLICK_NEXT_JS);
-      if (!clicked) break;
+      if (!(clicked === true || clicked === 'true')) break;
 
       const after = await waitForPageStatus(page, PAGE_STATUS_JS, LOAD_TIMEOUT_SEC);
       if (after !== 'ready' && after !== 'hydrating') break;
