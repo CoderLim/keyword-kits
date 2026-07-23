@@ -6,4 +6,5 @@ node_modules/
 # opencli 命令编译产物（由 npm run build 从 src/ 生成）
 packages/sim/backlinks.js
 packages/sim/landing-pages.js
+packages/sim/keyword-generator.js
 packages/google-trends/trends-now.js
