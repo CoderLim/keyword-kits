@@ -7,3 +7,4 @@ node_modules/
 packages/sim/backlinks.js
 packages/sim/landing-pages.js
 packages/google-trends/trends-now.js
+packages/query-domain/search.js

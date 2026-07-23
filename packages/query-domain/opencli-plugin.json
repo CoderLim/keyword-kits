@@ -1,0 +1,6 @@
+{
+  "name": "query-domain",
+  "version": "0.1.0",
+  "description": "query.domains keyword domain list (queryDomain search)",
+  "opencli": ">=1.8.6"
+}

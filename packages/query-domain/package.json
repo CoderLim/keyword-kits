@@ -1,0 +1,17 @@
+{
+  "name": "opencli-plugin-query-domain",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "opencli plugin: query.domains keyword domain search (queryDomain search)",
+  "license": "MIT",
+  "peerDependencies": {
+    "@jackwener/opencli": ">=1.8.6"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.1"
+  },
+  "scripts": {
+    "build": "npx esbuild src/search.ts --bundle --outfile=search.js --format=esm --platform=node --packages=external",
+    "test": "npm run build && node --test search.test.mjs"
+  }
+}
