@@ -276,6 +276,20 @@ OPENCLI_BROWSER_COMMAND_TIMEOUT=180 npm run subdomain-keywords
 OPENCLI_BROWSER_COMMAND_TIMEOUT=180 npm run subdomain-keywords -- --json
 ```
 
+### `trendsnow-keywords`
+
+路径：[`.cursor/skills/trendsnow-keywords/SKILL.md`](.cursor/skills/trendsnow-keywords/SKILL.md)
+
+通过 `opencli google trendsNow` 拉取近期热搜，逐词判断哪些适合做成**工具站 / 游戏站**等网站，并给出中文翻译。**不要强行把关键词解读成符合预期的需求**；无可做的词就如实说明。依赖已安装的 **google-trends** 子插件。
+
+触发示例：`/trendsnow-keywords`，或「用 trendsNow 看看有没有能做工具站的热词」。
+
+默认拉取：
+
+```bash
+opencli google trendsNow --geo US --status active --hours 24 --limit 50 -f json
+```
+
 ---
 
 ## Scripts
