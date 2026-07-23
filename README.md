@@ -1,4 +1,4 @@
-# opencli plugins (sim + google-trends + query-domain)
+# opencli plugins (sim + google-trends + query-domain + ahrefs)
 
 基于 [opencli](https://github.com/jackwener/OpenCLI) 的插件 monorepo：
 
@@ -7,6 +7,7 @@
 | [`packages/sim`](packages/sim) | SimilarWeb（`sim.3ue.com`），需已登录 Chrome |
 | [`packages/google-trends`](packages/google-trends) | Google Trends 扩展，挂到 `opencli google …`（PUBLIC，无需浏览器） |
 | [`packages/query-domain`](packages/query-domain) | query.domains 关键词域名列表，`queryDomain search`，PUBLIC，无需 Chrome |
+| [`packages/ahrefs`](packages/ahrefs) | Ahrefs 免费 KD（Keyword Difficulty），尽量免登录；需 Chrome Bridge（Strategy.UI） |
 
 仓库：https://github.com/CoderLim/keyword-kits
 
@@ -22,10 +23,15 @@ npm install -g @jackwener/opencli
 opencli doctor   # 需显示 Everything looks good
 ```
 
-对 **sim** 额外需要：
+对 **sim** 与 **ahrefs** 额外需要：
 
 3. Chrome 已安装 [OpenCLI 扩展](https://chromewebstore.google.com/detail/opencli/ildkmabpimmkaediidaifkhjpohdnifk)  
+
+对 **sim** 还需：
+
 4. 浏览器中已登录 **https://sim.3ue.com**
+
+**ahrefs** 只需 Chrome Bridge，**不需要** Ahrefs 账号登录。
 
 **google-trends** 与 **query-domain** 不需要 Chrome。
 
@@ -42,6 +48,7 @@ npm run build
 opencli plugin install file://$(pwd)/packages/sim
 opencli plugin install file://$(pwd)/packages/google-trends
 opencli plugin install file://$(pwd)/packages/query-domain
+opencli plugin install file://$(pwd)/packages/ahrefs
 ```
 
 从 GitHub monorepo 安装：
@@ -52,6 +59,7 @@ opencli plugin install github:CoderLim/keyword-kits
 opencli plugin install github:CoderLim/keyword-kits/sim
 opencli plugin install github:CoderLim/keyword-kits/google-trends
 opencli plugin install github:CoderLim/keyword-kits/query-domain
+opencli plugin install github:CoderLim/keyword-kits/ahrefs
 ```
 
 确认：
@@ -61,6 +69,7 @@ opencli plugin list
 opencli sim --help
 opencli google trendsNow --help
 opencli queryDomain --help
+opencli ahrefs kd --help
 ```
 
 更新 / 卸载：
@@ -69,9 +78,11 @@ opencli queryDomain --help
 opencli plugin update sim
 opencli plugin update google-trends
 opencli plugin update query-domain
+opencli plugin update ahrefs
 opencli plugin uninstall sim
 opencli plugin uninstall google-trends
 opencli plugin uninstall query-domain
+opencli plugin uninstall ahrefs
 ```
 
 ---
@@ -85,6 +96,7 @@ opencli plugin uninstall query-domain
 | `sim keyword-generator` | sim | 关键词生成器（phrase match，可筛 volume/CPC/难度） |
 | `google trendsNow` | google-trends | Trending Now（支持 geo / status / hours） |
 | `queryDomain search` | query-domain | 关键词相关域名列表（固定 14 TLD） |
+| `ahrefs kd` | ahrefs | 免费 Keyword Difficulty |
 
 官方内置 `google trends`（RSS 日报热搜）仍可用，与本仓库的 `trendsNow` 互不覆盖。
 
@@ -131,6 +143,44 @@ opencli queryDomain search "ai image" -f json
 输出列：`domain`, `year`, `dr`, `forSale`, `registered`, `expires`, `existed`
 
 遇 HTTP 429 时稍后重试，或在站点登录 / 升级 Pro。
+
+---
+
+## `ahrefs kd`
+
+查询 [Ahrefs 免费 Keyword Difficulty Checker](https://ahrefs.com/keyword-difficulty) 的 KD 分数。尽量免登录；底层 XHR 需 captcha，故采用 **Strategy.UI**（非 PUBLIC）。
+
+需 Chrome + OpenCLI 扩展（与 sim 类似），**不需要** Ahrefs 账号登录。
+
+```bash
+opencli ahrefs kd "keyword research"
+opencli ahrefs kd "keyword research" --country us -f json
+OPENCLI_BROWSER_COMMAND_TIMEOUT=180 opencli ahrefs kd "seo tools" --country uk -f json
+```
+
+| 参数 | 类型 | 默认 | 说明 |
+|------|------|------|------|
+| `keyword` | string（位置） | — | 要查询的关键词或短语 |
+| `--country` | string | `us` | 两位小写国家码（如 `us`、`uk`、`de`） |
+
+输出列：`keyword`、`country`、`kd`（整数 0–100）
+
+对应页面 deep-link（自动触发检查）：
+
+```
+https://ahrefs.com/keyword-difficulty/?country=us&input=keyword%20research
+```
+
+页面较慢或 CookieYes 弹窗时可提高超时：
+
+```bash
+OPENCLI_BROWSER_COMMAND_TIMEOUT=180 opencli ahrefs kd "keyword research" -f json
+```
+
+设计文档：
+
+- [`docs/superpowers/specs/2026-07-23-ahrefs-kd-design.md`](docs/superpowers/specs/2026-07-23-ahrefs-kd-design.md)
+- [`docs/superpowers/plans/2026-07-23-ahrefs-kd.md`](docs/superpowers/plans/2026-07-23-ahrefs-kd.md)
 
 ---
 
@@ -295,6 +345,13 @@ OPENCLI_BROWSER_COMMAND_TIMEOUT=180 opencli sim keyword-generator dice --limit 1
 - **源码**：`packages/google-trends/src/trends-now.ts`  
 - **产物**：`packages/google-trends/trends-now.js`
 
+### ahrefs
+
+- **策略**：`Strategy.UI`（免费页；底层 API 需 captcha，非 PUBLIC）  
+- **页面**：`https://ahrefs.com/keyword-difficulty`（deep-link 自动检查）  
+- **源码**：`packages/ahrefs/src/kd.ts`  
+- **产物**：`packages/ahrefs/kd.js`（`npm run build`，gitignore）
+
 设计文档（sim）：
 
 - [`docs/superpowers/specs/2026-07-23-sim-backlinks-design.md`](docs/superpowers/specs/2026-07-23-sim-backlinks-design.md)
@@ -313,10 +370,12 @@ npm run build
 opencli plugin install file://$(pwd)/packages/sim
 opencli plugin install file://$(pwd)/packages/google-trends
 opencli plugin install file://$(pwd)/packages/query-domain
+opencli plugin install file://$(pwd)/packages/ahrefs
 
 opencli google trendsNow --limit 5 -f json
 opencli sim backlinks stripe.com --limit 5 -f json
 opencli queryDomain search "ai image" -f json
+OPENCLI_BROWSER_COMMAND_TIMEOUT=180 opencli ahrefs kd "keyword research" -f json
 ```
 
 目录结构：
@@ -336,12 +395,17 @@ keyword-kits/
 │   │   ├── package.json
 │   │   ├── src/trends-now.ts
 │   │   └── trends-now.js
-│   └── query-domain/
+│   ├── query-domain/
+│   │   ├── opencli-plugin.json
+│   │   ├── package.json
+│   │   ├── src/lib.ts
+│   │   ├── src/search.ts
+│   │   └── *.js                 # build 产物
+│   └── ahrefs/
 │       ├── opencli-plugin.json
 │       ├── package.json
-│       ├── src/lib.ts
-│       ├── src/search.ts
-│       └── *.js                 # build 产物
+│       ├── src/kd.ts
+│       └── kd.js                # build 产物
 ├── scripts/
 ├── .cursor/skills/
 ├── README.md
@@ -356,9 +420,12 @@ keyword-kits/
 
 | 现象 | 处理 |
 |------|------|
-| `opencli doctor` 失败 | 检查 daemon / Chrome 扩展（仅 sim 需要） |
+| `opencli doctor` 失败 | 检查 daemon / Chrome 扩展（sim / ahrefs 需要） |
 | `AUTH_REQUIRED`（sim） | Chrome 打开并登录 sim.3ue.com |
-| `TIMEOUT`（sim） | 加大 `OPENCLI_BROWSER_COMMAND_TIMEOUT` |
+| `TIMEOUT`（sim / ahrefs） | 加大 `OPENCLI_BROWSER_COMMAND_TIMEOUT`（如 `180`） |
+| challenge / rate limit（ahrefs） | Cloudflare 或频率限制；稍后重试或换网络 |
+| 意外登录墙（ahrefs） | 免费页策略变更；报错 `requires login unexpectedly` |
+| CookieYes 弹窗挡点击（ahrefs） | 命令会自动尝试 Accept/Reject All；仍失败则手动在 Chrome 关掉弹窗后重试 |
 | 命令未注册 | 确认已装对应子插件目录；`opencli plugin list` |
 | 改了 TS 无效果 | 重新 `npm run build` |
 | `trendsNow` 无数据 | 换 `geo` / `hours` / `status`，或稍后重试 |
