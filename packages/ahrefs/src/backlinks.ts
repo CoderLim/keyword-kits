@@ -291,7 +291,7 @@ async function pollForBacklinks(
 /**
  * After summary is ready, wait until tbody tr count is unchanged across two
  * consecutive polls (0.5s apart), or until a short max wait / overall deadline.
- * Empty (stable 0) is OK — table may truly have no rows.
+ * Do not treat stable 0 as settled — summary often renders before table rows load.
  */
 async function waitForTableStable(
   page: {
@@ -304,8 +304,8 @@ async function waitForTableStable(
   let prev: number | null = null;
   while (Date.now() < tableDeadline) {
     const count = Number(await page.evaluate(TABLE_ROW_COUNT_JS)) || 0;
-    if (prev !== null && count === prev) return;
-    prev = count;
+    if (count > 0 && prev !== null && count === prev) return;
+    if (count > 0) prev = count;
     await page.wait(0.5);
   }
 }
