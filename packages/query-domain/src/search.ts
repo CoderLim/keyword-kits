@@ -90,7 +90,12 @@ async function fetchDrMap(domains: string[]): Promise<Record<string, number>> {
   if (!resp.ok) {
     throw new CliError('FETCH_ERROR', `DR HTTP ${resp.status}`, 'Retry later');
   }
-  const json = (await resp.json()) as { data?: Record<string, number> };
+  let json: { data?: Record<string, number> };
+  try {
+    json = (await resp.json()) as { data?: Record<string, number> };
+  } catch {
+    throw new CliError('FETCH_ERROR', 'DR response is not valid JSON', 'Retry later');
+  }
   return json.data && typeof json.data === 'object' ? json.data : {};
 }
 
