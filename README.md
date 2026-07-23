@@ -7,7 +7,7 @@
 | [`packages/sim`](packages/sim) | SimilarWeb（`sim.3ue.com`），需已登录 Chrome |
 | [`packages/google-trends`](packages/google-trends) | Google Trends 扩展，挂到 `opencli google …`（PUBLIC，无需浏览器） |
 | [`packages/query-domain`](packages/query-domain) | query.domains 关键词域名列表，`queryDomain search`，PUBLIC，无需 Chrome |
-| [`packages/ahrefs`](packages/ahrefs) | Ahrefs 免费 KD（Keyword Difficulty），尽量免登录；需 Chrome Bridge（Strategy.UI） |
+| [`packages/ahrefs`](packages/ahrefs) | Ahrefs 免费 KD + Backlink Checker（DR + 外链），尽量免登录；需 Chrome Bridge（Strategy.UI） |
 
 仓库：https://github.com/CoderLim/keyword-kits
 
@@ -70,6 +70,7 @@ opencli sim --help
 opencli google trendsNow --help
 opencli queryDomain --help
 opencli ahrefs kd --help
+opencli ahrefs backlinks --help
 ```
 
 更新 / 卸载：
@@ -97,6 +98,7 @@ opencli plugin uninstall ahrefs
 | `google trendsNow` | google-trends | Trending Now（支持 geo / status / hours） |
 | `queryDomain search` | query-domain | 关键词相关域名列表（固定 14 TLD） |
 | `ahrefs kd` | ahrefs | 免费 Keyword Difficulty |
+| `ahrefs backlinks` | ahrefs | 免费 Backlink Checker（DR + 外链） |
 
 官方内置 `google trends`（RSS 日报热搜）仍可用，与本仓库的 `trendsNow` 互不覆盖。
 
@@ -181,6 +183,50 @@ OPENCLI_BROWSER_COMMAND_TIMEOUT=180 opencli ahrefs kd "keyword research" -f json
 
 - [`docs/superpowers/specs/2026-07-23-ahrefs-kd-design.md`](docs/superpowers/specs/2026-07-23-ahrefs-kd-design.md)
 - [`docs/superpowers/plans/2026-07-23-ahrefs-kd.md`](docs/superpowers/plans/2026-07-23-ahrefs-kd.md)
+
+---
+
+## `ahrefs backlinks`
+
+查询 [Ahrefs 免费 Backlink Checker](https://ahrefs.com/backlink-checker/) 的域名 DR 与外链列表。尽量免登录；底层 XHR 需 Turnstile captcha，故采用 **Strategy.UI**（非 PUBLIC）。
+
+需 Chrome + OpenCLI 扩展（与 sim / ahrefs kd 类似），**不需要** Ahrefs 账号登录。
+
+```bash
+opencli ahrefs backlinks ahrefs.com
+OPENCLI_BROWSER_COMMAND_TIMEOUT=180 opencli ahrefs backlinks ahrefs.com -f json
+```
+
+**推荐 `-f json`**：返回单个 `{ summary, links }` 对象（非行数组）。
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| `domain` | string（位置） | 目标域名或 URL，会规范化为 host |
+
+**固定行为（一期不暴露为参数）：** `mode=subdomains`（含子域名）；**无** `--limit`，返回页上当前可见的全部外链行。
+
+对应页面 deep-link（仅预填域名与 mode，**不会自动检查**）：
+
+```
+https://ahrefs.com/backlink-checker/?input={domain}&mode=subdomains
+```
+
+网页上需手动点击 **Check backlinks**；本命令会自动完成 CookieYes 关闭与点击检查。
+
+**summary** 字段：`domain`、`dr`、`refDomains`（Linking websites）、`refDomainsDofollowPct`、`backlinks`、`backlinksDofollowPct`
+
+**links** 列：`dr`、`title`、`sourceUrl`、`anchor`、`targetUrl`
+
+页面较慢或 CookieYes 弹窗时可提高超时：
+
+```bash
+OPENCLI_BROWSER_COMMAND_TIMEOUT=180 opencli ahrefs backlinks ahrefs.com -f json
+```
+
+设计文档：
+
+- [`docs/superpowers/specs/2026-07-23-ahrefs-backlinks-design.md`](docs/superpowers/specs/2026-07-23-ahrefs-backlinks-design.md)
+- [`docs/superpowers/plans/2026-07-23-ahrefs-backlinks.md`](docs/superpowers/plans/2026-07-23-ahrefs-backlinks.md)
 
 ---
 
@@ -347,10 +393,10 @@ OPENCLI_BROWSER_COMMAND_TIMEOUT=180 opencli sim keyword-generator dice --limit 1
 
 ### ahrefs
 
-- **策略**：`Strategy.UI`（免费页；底层 API 需 captcha，非 PUBLIC）  
-- **页面**：`https://ahrefs.com/keyword-difficulty`（deep-link 自动检查）  
-- **源码**：`packages/ahrefs/src/kd.ts`  
-- **产物**：`packages/ahrefs/kd.js`（`npm run build`，gitignore）
+- **策略**：`Strategy.UI`（免费页；底层 API 需 captcha / Turnstile，非 PUBLIC）  
+- **页面**：`https://ahrefs.com/keyword-difficulty`（kd deep-link 自动检查）；`https://ahrefs.com/backlink-checker`（backlinks deep-link 仅预填，命令自动点击 Check）  
+- **源码**：`packages/ahrefs/src/kd.ts`、`packages/ahrefs/src/backlinks.ts`  
+- **产物**：`packages/ahrefs/kd.js`、`packages/ahrefs/backlinks.js`（`npm run build`，gitignore）
 
 设计文档（sim）：
 
@@ -376,6 +422,7 @@ opencli google trendsNow --limit 5 -f json
 opencli sim backlinks stripe.com --limit 5 -f json
 opencli queryDomain search "ai image" -f json
 OPENCLI_BROWSER_COMMAND_TIMEOUT=180 opencli ahrefs kd "keyword research" -f json
+OPENCLI_BROWSER_COMMAND_TIMEOUT=180 opencli ahrefs backlinks ahrefs.com -f json
 ```
 
 目录结构：
@@ -405,7 +452,9 @@ keyword-kits/
 │       ├── opencli-plugin.json
 │       ├── package.json
 │       ├── src/kd.ts
-│       └── kd.js                # build 产物
+│       ├── src/backlinks.ts
+│       ├── kd.js                # build 产物
+│       └── backlinks.js         # build 产物
 ├── scripts/
 ├── .cursor/skills/
 ├── README.md
@@ -426,6 +475,7 @@ keyword-kits/
 | challenge / rate limit（ahrefs） | Cloudflare 或频率限制；稍后重试或换网络 |
 | 意外登录墙（ahrefs） | 免费页策略变更；报错 `requires login unexpectedly` |
 | CookieYes 弹窗挡点击（ahrefs） | 命令会自动尝试 Accept/Reject All；仍失败则手动在 Chrome 关掉弹窗后重试 |
+| Ahrefs 偶发超时 / 空结果（ahrefs） | 页面加载或 Turnstile 较慢；加大 `OPENCLI_BROWSER_COMMAND_TIMEOUT` 后重试 |
 | 命令未注册 | 确认已装对应子插件目录；`opencli plugin list` |
 | 改了 TS 无效果 | 重新 `npm run build` |
 | `trendsNow` 无数据 | 换 `geo` / `hours` / `status`，或稍后重试 |
