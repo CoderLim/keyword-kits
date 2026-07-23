@@ -7,6 +7,7 @@
  *   - UI: https://ahrefs.com/keyword-difficulty
  *   - Deep-link (auto-runs check): ?country=<cc>&input=<keyword>
  *     e.g. https://ahrefs.com/keyword-difficulty/?country=us&input=keyword%20research → KD 92
+ *     United Kingdom uses `gb` (not `uk`); CLI accepts `uk` as alias → `gb`.
  *   - Prefer page.newTab(deep-link); fallback: open base → fill input → Check keyword
  *   - Form: input[placeholder="Enter keyword"]; country control; submit "Check keyword"
  *   - Result modal: [role=dialog][class*=content] titled `Keyword Difficulty for "…"`.
@@ -158,7 +159,7 @@ cli({
       name: 'country',
       type: 'string',
       default: 'us',
-      help: 'Two-letter country code (default us)',
+      help: 'Two-letter country code (default us; uk → gb)',
     },
   ],
   columns: ['keyword', 'country', 'kd'],
