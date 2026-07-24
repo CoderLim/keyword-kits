@@ -38,6 +38,26 @@ Default on load (All / Search): sorted by **流量份额** (`Share`) desc — he
 - Confirmed after Change desc: top MoMChange values like `> 5,000%` with `.changePercentage.positive`; domains no longer youtube.com.
 - Confirmed after Visits desc: top AvgMonthVisits `3.410B`, `2.632B`, … domains youtube.com / wikipedia.org / …
 
+### Sort already-applied detection (`APPLY_SORT` → `'already'`)
+
+Locate the target header (same text match as above). Treat sort as **already desc** when **both** are true:
+
+```js
+header.classList.contains('is-sorted') && header.classList.contains('sortDirection--desc')
+```
+
+| CLI `--sort` | Header text match | Already-desc check |
+|--------------|-------------------|--------------------|
+| `change` | `innerText` starts with `变动` | `is-sorted` + `sortDirection--desc` |
+| `visits` | `innerText` includes `每月访问量` | `is-sorted` + `sortDirection--desc` |
+
+Notes:
+
+- Do **not** treat `sortDirection--undefined` (seen on the empty/pinned rank header) as desc.
+- Default page load sorts **流量份额** desc — that does **not** mean change/visits are already applied.
+- If already desc → return `'already'` and **do not click** (a second click may toggle asc).
+- If not already → click once, then **re-poll PAGE_STATUS** until `ready` (see Post-click reload).
+
 ## Industry path ids
 
 | CLI name (English or as shown) | Path id (replaces `All`) | Notes |
@@ -97,13 +117,68 @@ Example after Soccer:
      fallback `(domainCol[r].innerText || '').trim()`  
      (live cells are **single-line** domain strings, e.g. `youtube.com` / `fifa.com` — not multi-line; favicon is separate `<img data-automation="domain-favicon">`)
    - **trafficShare**: `(shareCol[r].innerText || '').trim()` → e.g. `3.90%` (progress bar chrome present; `innerText` is the percentage)
-   - **change**: `(changeCol[r].innerText || '').trim()` → e.g. `2.35%` or `> 5,000%`  
-     Sign/direction is **not** in plain text — read sibling/class: `.changePercentage.positive` vs `.changePercentage.negative` (icons `sw-icon-arrow-up*` / `sw-icon-arrow-down5`). Persist as displayed text plus optional sign from class if CLI needs signed values.
-   - **industry**: `(categoryCol[r].innerText || '').trim()` — may include child + parent lines in DOM (`电视、电影和流媒体` + `/艺术与娱乐`); prefer child label `.change-color-on-hover` / first line if splitting
+   - **change** (**v1 recommendation: signed string with direction**):
+     1. `raw = (changeCol[r].innerText || '').trim()` → e.g. `2.35%`, `863.27%`, `> 5,000%`
+     2. Read direction from `.changePercentage` class: `positive` | `negative`
+     3. Emit a **single signed string** (include direction; do not ship raw+class as two fields):
+        - `positive` → prefix `+` if missing → e.g. `+863.27%`, `+> 5,000%`
+        - `negative` → prefix `-` if missing → e.g. `-2.35%`
+        - if neither class (rare) → emit `raw` unchanged
+   - **industry**: prefer child label `categoryCol[r].querySelector('.change-color-on-hover')?.innerText.trim()`; fallback first line of `innerText` (DOM may also show parent as `/艺术与娱乐`)
    - **monthlyVisits**: `(visitsCol[r].innerText || '').trim()` → e.g. `3.422B`
    - **adsense**: **yes** if `hasAdsenseCol[r].querySelector('.sw-icon-checkmark_circle')` exists; **no** if cell HTML empty / no checkmark icon (cell `innerText` is always empty)
 
 Not row-major: do not iterate `tr` wrappers.
+
+### Sample row (Organic, Search/All, default Share desc — live)
+
+| Field | Value |
+|-------|-------|
+| rank | `1` |
+| domain | `youtube.com` |
+| trafficShare | `4.22%` |
+| change | `-2.35%` (raw `2.35%` + `.changePercentage.negative`) |
+| industry | `电视、电影和流媒体` |
+| monthlyVisits | `3.410B` |
+| adsense | `yes` (`.sw-icon-checkmark_circle` present) |
+
+### Sample row (Sports~Soccer after Change desc — live)
+
+| Field | Value |
+|-------|-------|
+| rank | `1` |
+| domain | `tigosports.com.sv` |
+| trafficShare | `< 0.01%` |
+| change | `+> 5,000%` (raw `> 5,000%` + `.changePercentage.positive`) |
+| monthlyVisits | `103,850` |
+| adsense | `no` |
+
+## PAGE_STATUS
+
+Canonical ready selector (**one primary**): `[data-automation-column-key="Domain"]`
+
+Suggested status JS (mirror landing-pages / keyword-generator):
+
+| Status | Rule |
+|--------|------|
+| `ready` | `document.querySelectorAll('[data-automation-column-key="Domain"]').length >= 5` |
+| `auth` | body matches `/请登录\|登录后\|Sign in\|Log in/i` **and** Domain count `=== 0` (same regex as landing-pages; also seen on unauthenticated Chrome MCP profile: redirect to `dash.3ue.com/.../login`, heading「登录」) |
+| `error` | body matches `/额，出错了\|Something went wrong\|请尝试刷新页面\|failed to load/i` **and** Domain count `=== 0` (**same regex family as landing-pages** — error wall not re-triggered in this recon session) |
+| `hydrating` | `0 < Domain.length < 5` |
+| `loading` | otherwise (table root may be absent; Domain count `=== 0`, no auth/error) |
+
+Open via `page.newTab` / fresh tab — same-domain hash `goto` can leave SPA on loader/error wall without remounting (also seen: `#first-time-loader-container` 「Preparing insights…」 before `#react-app` hydrates).
+
+### Post-click reload (Organic / sort header)
+
+After clicking Organic chip option **or** a sort header:
+
+1. Table **often clears briefly** — Domain count can drop to `0` within ~100ms (live: Change header click → `100 → 0 → 100` by ~300ms). This zero flash is **not** auth/error by itself.
+2. **Do not** rely only on fixed `sleep` / `wait time`.
+3. **Re-poll `waitForPageStatus` / PAGE_STATUS** until status is `ready` again (`Domain.length >= 5`), same as initial load and keyword-generator pagination post-click.
+4. Only classify `auth`/`error` if those body strings are present **and** Domain count stays `0` after the poll window.
+
+After Organic apply, also verify chip: `[data-automation="chip-item chip-item-自然"]` (or `simple-chip-item` text `自然`) before/while waiting for table ready.
 
 ## Organic ensure (if CLICK_REQUIRED)
 
