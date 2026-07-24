@@ -105,6 +105,7 @@ opencli plugin uninstall namecheap
 | `sim backlinks` | sim | 反向链接 |
 | `sim landing-pages` | sim | 自然着陆页（默认新点击量） |
 | `sim keyword-generator` | sim | 关键词生成器（phrase match，可筛 volume/CPC/难度） |
+| `sim web-ranking` | sim | 站点排名（搜索自然流量；可按变动/月访问量排序） |
 | `google trendsNow` | google-trends | Trending Now（支持 geo / status / hours） |
 | `queryDomain search` | query-domain | 关键词相关域名列表（固定 14 TLD） |
 | `ahrefs kd` | ahrefs | 免费 Keyword Difficulty |
@@ -413,6 +414,69 @@ OPENCLI_BROWSER_COMMAND_TIMEOUT=180 opencli sim keyword-generator dice --limit 1
 
 ---
 
+## `sim web-ranking`
+
+查看 Category Leaders **搜索自然流量**站点排名。固定筛选：Organic（自然）、时长 `1m`、全球、`webSource=Total`。
+
+**固定默认筛选（一期不暴露为参数）：**
+
+| 项 | 值 |
+|----|-----|
+| tab | `CategoryLeadersSearch` |
+| channel | Organic（自然；需 UI 点击） |
+| duration | `1m` |
+| country | 全球 |
+| webSource | `Total` |
+
+对应页面：
+
+```
+https://sim.3ue.com/#/digitalsuite/markets/webmarketanalysis/rankings/{industry}/999/1m
+  ?webSource=Total&selectedTab=CategoryLeadersSearch
+```
+
+#### 用法
+
+```bash
+OPENCLI_BROWSER_COMMAND_TIMEOUT=180 opencli sim web-ranking --limit 20 -f json
+OPENCLI_BROWSER_COMMAND_TIMEOUT=180 opencli sim web-ranking --sort visits --limit 20 -f json
+OPENCLI_BROWSER_COMMAND_TIMEOUT=180 opencli sim web-ranking --industry All --sort change --limit 10 -f json
+```
+
+#### 参数
+
+| 参数 | 类型 | 必填 | 默认 | 说明 |
+|------|------|------|------|------|
+| `--sort` | string | 否 | `change` | `change`（变动降序）/ `visits`（每月访问量降序） |
+| `--industry` | string | 否 | `All` | 行业：`All` 或已映射行业名 |
+| `--limit` | int | 否 | `50` | 返回条数，范围 `1–100` |
+
+#### 输出列
+
+| 列 | 含义 |
+|----|------|
+| `rank` | 列表序号 |
+| `domain` | 域名 |
+| `trafficShare` | 流量份额 |
+| `change` | 变动（MoM） |
+| `industry` | 行业 |
+| `monthlyVisits` | 每月访问量 |
+| `adsense` | 是否 AdSense |
+
+页面较慢时可提高超时：
+
+```bash
+OPENCLI_BROWSER_COMMAND_TIMEOUT=180 opencli sim web-ranking --limit 10 -f json
+```
+
+设计 / 侦察：
+
+- [`docs/superpowers/specs/2026-07-24-sim-web-ranking-design.md`](docs/superpowers/specs/2026-07-24-sim-web-ranking-design.md)
+- [`docs/superpowers/specs/2026-07-24-sim-web-ranking-recon-notes.md`](docs/superpowers/specs/2026-07-24-sim-web-ranking-recon-notes.md)
+- [`docs/superpowers/plans/2026-07-24-sim-web-ranking.md`](docs/superpowers/plans/2026-07-24-sim-web-ranking.md)
+
+---
+
 ## 实现说明
 
 ### sim
@@ -442,6 +506,9 @@ OPENCLI_BROWSER_COMMAND_TIMEOUT=180 opencli sim keyword-generator dice --limit 1
 - [`docs/superpowers/specs/2026-07-23-sim-keyword-generator-design.md`](docs/superpowers/specs/2026-07-23-sim-keyword-generator-design.md)
 - [`docs/superpowers/specs/2026-07-23-sim-keyword-generator-recon-notes.md`](docs/superpowers/specs/2026-07-23-sim-keyword-generator-recon-notes.md)
 - [`docs/superpowers/plans/2026-07-23-sim-keyword-generator.md`](docs/superpowers/plans/2026-07-23-sim-keyword-generator.md)
+- [`docs/superpowers/specs/2026-07-24-sim-web-ranking-design.md`](docs/superpowers/specs/2026-07-24-sim-web-ranking-design.md)
+- [`docs/superpowers/specs/2026-07-24-sim-web-ranking-recon-notes.md`](docs/superpowers/specs/2026-07-24-sim-web-ranking-recon-notes.md)
+- [`docs/superpowers/plans/2026-07-24-sim-web-ranking.md`](docs/superpowers/plans/2026-07-24-sim-web-ranking.md)
 
 ---
 
