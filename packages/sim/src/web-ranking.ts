@@ -151,8 +151,18 @@ const EXTRACT_ROWS_JS = `(() => {
   return JSON.stringify(rows);
 })()`;
 
-/** Organic is CLICK_REQUIRED — never in URL. */
-const ENSURE_ORGANIC_JS = `(() => {
+/** Organic is CLICK_REQUIRED — never in URL. Split opens vs option click. */
+const ORGANIC_CHIP_PRESENT_JS = `(() => {
+  const chip =
+    document.querySelector('[data-automation="chip-item chip-item-自然"]') ||
+    [...document.querySelectorAll('[data-automation="simple-chip-item"]')].find(
+      (el) => (el.innerText || '').trim() === '自然',
+    );
+  return chip ? 'yes' : 'no';
+})()`;
+
+/** Eval A: already organic → ok; else open chipdown → opened | missing. */
+const OPEN_ORGANIC_CHIPDOWN_JS = `(() => {
   const organicChip =
     document.querySelector('[data-automation="chip-item chip-item-自然"]') ||
     [...document.querySelectorAll('[data-automation="simple-chip-item"]')].find(
@@ -164,7 +174,15 @@ const ENSURE_ORGANIC_JS = `(() => {
   const chipdown = top?.querySelector('[data-automation="chipdown-no-border-button"]');
   if (!chipdown) return 'missing';
   chipdown.click();
+  return 'opened';
+})()`;
 
+const POPUP_PRESENT_JS = `(() => {
+  return document.querySelector('[data-automation="pop-up-content"]') ? 'yes' : 'no';
+})()`;
+
+/** Eval B: click popup row whose visible text is exactly 自然. */
+const CLICK_ORGANIC_OPTION_JS = `(() => {
   const popup = document.querySelector('[data-automation="pop-up-content"]');
   if (!popup) return 'missing';
 
@@ -213,17 +231,47 @@ async function assertPageReady(page: PageLike, label: string): Promise<void> {
   }
 }
 
+async function waitForOrganicPopup(page: PageLike, timeoutSec = 10): Promise<void> {
+  const deadline = Date.now() + timeoutSec * 1000;
+  while (Date.now() < deadline) {
+    if (String(await page.evaluate(POPUP_PRESENT_JS)) === 'yes') return;
+    await page.wait(0.2);
+  }
+  throw new CommandExecutionError(
+    'Organic chipdown popup (pop-up-content) did not appear',
+  );
+}
+
+async function assertOrganicChipApplied(page: PageLike): Promise<void> {
+  if (String(await page.evaluate(ORGANIC_CHIP_PRESENT_JS)) !== 'yes') {
+    throw new CommandExecutionError(
+      'Organic (自然) chip not present after applying filter',
+    );
+  }
+}
+
 async function ensureOrganic(page: PageLike): Promise<void> {
-  const result = String(await page.evaluate(ENSURE_ORGANIC_JS));
-  if (result === 'missing') {
+  const openResult = String(await page.evaluate(OPEN_ORGANIC_CHIPDOWN_JS));
+  if (openResult === 'ok') return;
+  if (openResult === 'missing') {
     throw new CommandExecutionError(
       'Organic (自然) filter control not found on web-ranking page',
     );
   }
-  if (result === 'clicked') {
-    // Table clears briefly after Organic apply — re-poll until ready.
-    await assertPageReady(page, 'sim web-ranking (after Organic)');
+
+  // openResult === 'opened' — wait for popup, then click 自然 in a separate evaluate.
+  await waitForOrganicPopup(page);
+
+  const clickResult = String(await page.evaluate(CLICK_ORGANIC_OPTION_JS));
+  if (clickResult === 'missing') {
+    throw new CommandExecutionError(
+      'Organic (自然) popup option not found on web-ranking page',
+    );
   }
+
+  // Table clears briefly after Organic apply — re-poll until ready, then verify chip.
+  await assertPageReady(page, 'sim web-ranking (after Organic)');
+  await assertOrganicChipApplied(page);
 }
 
 async function ensureSort(page: PageLike, sort: WebRankingSort): Promise<void> {
