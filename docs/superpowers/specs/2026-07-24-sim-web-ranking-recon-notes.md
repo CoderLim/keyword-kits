@@ -189,6 +189,7 @@ After Organic apply, also verify chip: `[data-automation="chip-item chip-item-�
   - `[data-automation="chip-item chip-item-自然"]` and/or `[data-automation="simple-chip-item"]` with text `自然`
   - chipdown「付费和自然」is gone
 - How to detect already Organic: presence of `[data-automation="chip-item chip-item-自然"]` **or** `[data-automation="simple-chip-item"]` whose text is `自然`
+- After selecting 自然: **re-poll PAGE_STATUS** until `ready` (table clears during filter apply — see Post-click reload)
 - **Must re-apply after industry path change** — live evidence: navigating to `Games` / `AI_Chatbots_and_Tools` / `Sports~Soccer` resets filter UI back to「付费和自然」while URL still has no Organic param
 - URL never gains an Organic query key → always treat as UI click, not deep-linkable
 
