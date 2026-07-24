@@ -3,7 +3,7 @@ name: subdomain-keywords
 description: >-
   通过 opencli sim landing-pages 批量拉取托管子域名平台的新点击着陆页，
   提取并去重英文关键词（点击量≥2K），再按每 5 个关键词生成 Google Trends URL。
-  在用户提到子域名关键词、subdomain keywords、vercel.app/pages.dev/github.io
+  在用户提到子域名关键词、subdomain keywords、vercel.app/pages.dev/github.io/workers.dev
   等平台新词发现或 Google Trends 对比时使用。
 ---
 
@@ -32,6 +32,7 @@ description: >-
 - `firebaseapp.com`
 - `lovable.app`
 - `onrender.com`
+- `workers.dev`
 
 ## 执行步骤
 

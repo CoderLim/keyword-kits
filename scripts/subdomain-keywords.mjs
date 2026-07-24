@@ -23,6 +23,7 @@ const DOMAINS = [
   'firebaseapp.com',
   'lovable.app',
   'onrender.com',
+  'workers.dev',
 ];
 
 const LIMIT = 10;
