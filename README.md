@@ -299,7 +299,7 @@ opencli sim backlinks https://www.stripe.com/pricing --limit 10 -f yaml
 | 参数 | 类型 | 必填 | 默认 | 说明 |
 |------|------|------|------|------|
 | `domain` | string | 是 | — | 域名或 URL，会规范化为 host |
-| `--limit` | int | 否 | `50` | 返回条数，范围 `1–100` |
+| `--limit` | int | 否 | `50` | 返回条数，正整数，无最大值限制 |
 
 #### 输出列
 

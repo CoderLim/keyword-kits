@@ -26,10 +26,12 @@ import {
   TimeoutError,
 } from '@jackwener/opencli/errors';
 import { cli, Strategy } from '@jackwener/opencli/registry';
+import {
+  DEFAULT_BACKLINKS_LIMIT,
+  normalizeBacklinksLimit,
+} from './lib/backlinks-limit.js';
 
 const SITE_ORIGIN = 'https://sim.3ue.com';
-const DEFAULT_LIMIT = 50;
-const MAX_LIMIT = 100;
 const LOAD_TIMEOUT_SEC = 90;
 
 const COLUMNS = [
@@ -77,18 +79,6 @@ export function normalizeDomain(raw: unknown): string {
     throw new ArgumentError(`invalid domain: ${input}`);
   }
   return host;
-}
-
-export function normalizeLimit(raw: unknown, defaultValue = DEFAULT_LIMIT): number {
-  const value = raw ?? defaultValue;
-  const n = Number(value);
-  if (!Number.isInteger(n) || n < 1) {
-    throw new ArgumentError('limit must be a positive integer');
-  }
-  if (n > MAX_LIMIT) {
-    throw new ArgumentError(`limit must be <= ${MAX_LIMIT}`);
-  }
-  return n;
 }
 
 function buildBacklinksUrl(domain: string): string {
@@ -173,14 +163,14 @@ cli({
     {
       name: 'limit',
       type: 'int',
-      default: DEFAULT_LIMIT,
-      help: `返回条数（1-${MAX_LIMIT}，默认 ${DEFAULT_LIMIT}）`,
+      default: DEFAULT_BACKLINKS_LIMIT,
+      help: `返回条数（正整数，默认 ${DEFAULT_BACKLINKS_LIMIT}）`,
     },
   ],
   columns: [...COLUMNS],
   func: async (page, kwargs) => {
     const domain = normalizeDomain(kwargs.domain);
-    const limit = normalizeLimit(kwargs.limit, DEFAULT_LIMIT);
+    const limit = normalizeBacklinksLimit(kwargs.limit);
     const url = buildBacklinksUrl(domain);
 
     if (typeof page.newTab === 'function' && typeof page.selectTab === 'function') {
