@@ -28,6 +28,7 @@ import {
 import { cli, Strategy } from '@jackwener/opencli/registry';
 import {
   DEFAULT_BACKLINKS_LIMIT,
+  MAX_BACKLINKS_LIMIT,
   normalizeBacklinksLimit,
 } from './lib/backlinks-limit.js';
 
@@ -164,7 +165,7 @@ cli({
       name: 'limit',
       type: 'int',
       default: DEFAULT_BACKLINKS_LIMIT,
-      help: `返回条数（正整数，默认 ${DEFAULT_BACKLINKS_LIMIT}）`,
+      help: `返回条数（1-${MAX_BACKLINKS_LIMIT}，默认 ${DEFAULT_BACKLINKS_LIMIT}）`,
     },
   ],
   columns: [...COLUMNS],

@@ -3,9 +3,16 @@ import { describe, it } from 'node:test';
 import { normalizeBacklinksLimit } from './backlinks-limit.ts';
 
 describe('normalizeBacklinksLimit', () => {
-  it('accepts positive integers greater than 100', () => {
-    assert.equal(normalizeBacklinksLimit(101), 101);
-    assert.equal(normalizeBacklinksLimit(1_000), 1_000);
+  it('accepts positive integers up to 100', () => {
+    assert.equal(normalizeBacklinksLimit(1), 1);
+    assert.equal(normalizeBacklinksLimit(100), 100);
+  });
+
+  it('rejects integers greater than 100', () => {
+    assert.throws(
+      () => normalizeBacklinksLimit(101),
+      /limit must be <= 100/,
+    );
   });
 
   it('rejects values that are not positive integers', () => {
