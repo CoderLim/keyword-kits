@@ -1,0 +1,17 @@
+{
+  "name": "opencli-plugin-sem",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "opencli plugin for SEMrush (sem.3ue.com)",
+  "license": "MIT",
+  "peerDependencies": {
+    "@jackwener/opencli": ">=1.8.6"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.1"
+  },
+  "scripts": {
+    "build": "npx esbuild src/query-domain.ts --bundle --outfile=query-domain.js --format=esm --platform=node --packages=external",
+    "test": "node --experimental-strip-types --test src/lib/*.test.ts"
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "sem",
+  "version": "0.1.0",
+  "description": "SEMrush via sem.3ue.com (query-domain)",
+  "opencli": ">=1.8.6"
+}
