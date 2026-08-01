@@ -48,6 +48,17 @@ export function buildOverviewUrl(domain: string): string {
   return `${SITE_ORIGIN}/analytics/overview/?${qs.toString()}`;
 }
 
+/** Active + follow backlinks list (filters locked in URL). */
+export function buildBacklinksUrl(domain: string): string {
+  const qs = new URLSearchParams({
+    q: domain,
+    searchType: 'domain',
+    ba_mt: 'active',
+    ba_rel: 'follow',
+  });
+  return `${SITE_ORIGIN}/analytics/backlinks/backlinks/?${qs.toString()}`;
+}
+
 export async function openDeepLink(page: PageLike, url: string): Promise<void> {
   if (typeof page.newTab === 'function' && typeof page.selectTab === 'function') {
     const tabId = await page.newTab(url);
@@ -55,6 +66,67 @@ export async function openDeepLink(page: PageLike, url: string): Promise<void> {
     return;
   }
   await page.goto(url);
+}
+
+/** Warm GMITM session if cold open bounced to dash.3ue.com. */
+export async function ensureSemSession(page: PageLike): Promise<void> {
+  await openDeepLink(page, `${SITE_ORIGIN}/`);
+  const deadline = Date.now() + 30_000;
+  while (Date.now() < deadline) {
+    const host = String(
+      await page.evaluate(`(() => location.hostname || '')()`),
+    );
+    if (host === 'sem.3ue.com' || host.endsWith('.sem.3ue.com')) return;
+    await page.wait(0.5);
+  }
+}
+
+/**
+ * Open a sem.3ue.com deep-link; if redirected to dash, warm session and retry once.
+ * `statusJs` must return `wrong-site` when on dash.3ue.com.
+ */
+export async function openSemDeepLink(
+  page: PageLike,
+  url: string,
+  statusJs: string,
+): Promise<void> {
+  await openDeepLink(page, url);
+  const deadline = Date.now() + 8_000;
+  while (Date.now() < deadline) {
+    const status = String(await page.evaluate(statusJs));
+    if (status === 'wrong-site') {
+      await ensureSemSession(page);
+      await openDeepLink(page, url);
+      return;
+    }
+    if (
+      status === 'ready'
+      || status === 'auth'
+      || status === 'hydrating'
+      || status === 'empty'
+    ) {
+      return;
+    }
+    await page.wait(0.5);
+  }
+}
+
+export const DEFAULT_BACKLINKS_LIMIT = 50;
+export const MAX_BACKLINKS_LIMIT = 100;
+
+export function normalizeBacklinksLimit(
+  raw: unknown,
+  defaultValue = DEFAULT_BACKLINKS_LIMIT,
+): number {
+  const value = raw ?? defaultValue;
+  const n = Number(value);
+  if (!Number.isInteger(n) || n < 1) {
+    throw new ArgumentError('limit must be a positive integer');
+  }
+  if (n > MAX_BACKLINKS_LIMIT) {
+    throw new ArgumentError(`limit must be <= ${MAX_BACKLINKS_LIMIT}`);
+  }
+  return n;
 }
 
 export async function waitForPageStatus(

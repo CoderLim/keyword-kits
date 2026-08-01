@@ -15,3 +15,4 @@ packages/ahrefs/lib.js
 packages/ahrefs/kd.js
 packages/ahrefs/backlinks.js
 packages/sem/query-domain.js
+packages/sem/backlinks.js

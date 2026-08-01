@@ -28,10 +28,11 @@ import {
 import { cli, Strategy } from '@jackwener/opencli/registry';
 import {
   LOAD_TIMEOUT_SEC,
-  SITE_ORIGIN,
   buildOverviewUrl,
+  ensureSemSession,
   normalizeDomain,
   openDeepLink,
+  openSemDeepLink,
   parseDr,
   parseJsonPayload,
   type PageLike,
@@ -101,36 +102,6 @@ const EXTRACT_JS = `(() => {
   });
 })()`;
 
-async function ensureSemSession(page: PageLike): Promise<void> {
-  await openDeepLink(page, `${SITE_ORIGIN}/`);
-  const deadline = Date.now() + 30_000;
-  while (Date.now() < deadline) {
-    const host = String(
-      await page.evaluate(`(() => location.hostname || '')()`),
-    );
-    if (host === 'sem.3ue.com' || host.endsWith('.sem.3ue.com')) return;
-    await page.wait(0.5);
-  }
-}
-
-async function openOverview(page: PageLike, domain: string): Promise<void> {
-  const url = buildOverviewUrl(domain);
-  await openDeepLink(page, url);
-
-  // Brief check: cold session may bounce to dash.3ue.com
-  const deadline = Date.now() + 8_000;
-  while (Date.now() < deadline) {
-    const status = String(await page.evaluate(PAGE_STATUS_JS));
-    if (status === 'wrong-site') {
-      await ensureSemSession(page);
-      await openDeepLink(page, url);
-      return;
-    }
-    if (status === 'ready' || status === 'auth' || status === 'hydrating') return;
-    await page.wait(0.5);
-  }
-}
-
 cli({
   site: 'sem',
   name: 'query-domain',
@@ -152,7 +123,8 @@ cli({
   columns: [...COLUMNS],
   func: async (page, kwargs) => {
     const domain = normalizeDomain(kwargs.domain);
-    await openOverview(page as PageLike, domain);
+    const url = buildOverviewUrl(domain);
+    await openSemDeepLink(page as PageLike, url, PAGE_STATUS_JS);
 
     let status = 'loading';
     let refreshed = false;

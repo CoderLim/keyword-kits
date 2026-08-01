@@ -1,6 +1,6 @@
 {
   "name": "sem",
   "version": "0.1.0",
-  "description": "SEMrush via sem.3ue.com (query-domain)",
+  "description": "SEMrush via sem.3ue.com (query-domain, backlinks)",
   "opencli": ">=1.8.6"
 }

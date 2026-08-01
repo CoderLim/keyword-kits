@@ -11,7 +11,7 @@
     "esbuild": "^0.28.1"
   },
   "scripts": {
-    "build": "npx esbuild src/query-domain.ts --bundle --outfile=query-domain.js --format=esm --platform=node --packages=external",
+    "build": "npx esbuild src/query-domain.ts --bundle --outfile=query-domain.js --format=esm --platform=node --packages=external && npx esbuild src/backlinks.ts --bundle --outfile=backlinks.js --format=esm --platform=node --packages=external",
     "test": "node --experimental-strip-types --test src/lib/*.test.ts"
   }
 }
