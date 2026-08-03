@@ -36,10 +36,18 @@ describe('buildOverviewUrl', () => {
 });
 
 describe('buildBacklinksUrl', () => {
-  it('locks active + follow filters', () => {
+  it('locks active + optional ba_rel', () => {
+    assert.equal(
+      buildBacklinksUrl('quordlewordle.io', 'follow'),
+      'https://sem.3ue.com/analytics/backlinks/backlinks/?q=quordlewordle.io&searchType=domain&ba_mt=active&ba_rel=follow',
+    );
+    assert.equal(
+      buildBacklinksUrl('quordlewordle.io', 'nofollow'),
+      'https://sem.3ue.com/analytics/backlinks/backlinks/?q=quordlewordle.io&searchType=domain&ba_mt=active&ba_rel=nofollow',
+    );
     assert.equal(
       buildBacklinksUrl('quordlewordle.io'),
-      'https://sem.3ue.com/analytics/backlinks/backlinks/?q=quordlewordle.io&searchType=domain&ba_mt=active&ba_rel=follow',
+      'https://sem.3ue.com/analytics/backlinks/backlinks/?q=quordlewordle.io&searchType=domain&ba_mt=active',
     );
   });
 });

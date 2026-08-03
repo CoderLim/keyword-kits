@@ -1,19 +1,20 @@
 /**
- * sem backlinks — Active + Follow reverse links on sem.3ue.com (SEMrush).
+ * sem backlinks — Active reverse links on sem.3ue.com (SEMrush).
  *
  * Strategy: UI
  * Contract: visible-ui
- * Evidence (2026-08-01 live recon):
- *   - UI: /analytics/backlinks/backlinks/?q={domain}&searchType=domain&ba_mt=active&ba_rel=follow
- *     Filters locked in URL (活跃 / Follow). No fid / __gmitm in deep-link.
+ * Evidence (2026-08-01 live recon; dofollow 2026-08-03):
+ *   - UI: /analytics/backlinks/backlinks/?q={domain}&searchType=domain&ba_mt=active[&ba_rel=follow|nofollow]
+ *     Default --dofollow true → ba_rel=follow. No fid / __gmitm in deep-link.
  *   - Cold open may bounce to dash.3ue.com → warm via https://sem.3ue.com/ then retry.
  *   - Table: Semrush DataTable `[role=grid]` / `[role=row]` (not <table>).
  *     Header + ~100 data rows visible ("1 - 100 (N)").
  *     Columns (index → field):
  *       0 checkbox | 1 页面 AS → dr | 2 源页面标题和 URL → sourceTitle/sourceUrl
  *       | 3 外部链接 → externalLinks | 4 内部链接 → internalLinks
- *       | 5 锚链接和目标 URL → anchor/targetUrl | 6 首次发现日期 → firstSeen
+ *       | 5 锚链接和目标 URL → anchor/targetUrl/dofollow | 6 首次发现日期 → firstSeen
  *       | 7 上次发现日期 → lastSeen
+ *     dofollow: cell[5] badge `[data-test-type=nofollow]` → false; else true.
  *     Source/target: prefer non-semrush.com <a href> inside the cell.
  * Auth: Chrome session on sem.3ue.com
  * Browser: true
@@ -25,6 +26,7 @@ import {
   TimeoutError,
 } from '@jackwener/opencli/errors';
 import { cli, Strategy } from '@jackwener/opencli/registry';
+import { dofollowToBaRel, normalizeDofollow } from './lib/dofollow.js';
 import {
   DEFAULT_BACKLINKS_LIMIT,
   LOAD_TIMEOUT_SEC,
@@ -48,6 +50,7 @@ const COLUMNS = [
   'internalLinks',
   'anchor',
   'targetUrl',
+  'dofollow',
   'firstSeen',
   'lastSeen',
 ] as const;
@@ -60,6 +63,7 @@ type BacklinkRow = {
   internalLinks: number | null;
   anchor: string;
   targetUrl: string;
+  dofollow: boolean;
   firstSeen: string;
   lastSeen: string;
 };
@@ -179,6 +183,10 @@ const EXTRACT_ROWS_JS = `(() => {
 
     if (!asText && !sourceUrl && !anchor) continue;
 
+    // SEMrush paints nofollow/ugc/sponsored as [data-test-type] badges in cell 5.
+    // Follow links have no nofollow badge → dofollow true.
+    const dofollow = !cells[5]?.querySelector?.('[data-test-type="nofollow"]');
+
     out.push({
       drRaw: asText,
       sourceTitle,
@@ -187,6 +195,7 @@ const EXTRACT_ROWS_JS = `(() => {
       internalLinksRaw: (cells[4]?.innerText || '').trim(),
       anchor,
       targetUrl,
+      dofollow,
       firstSeen: (cells[6]?.innerText || '').trim(),
       lastSeen: (cells[7]?.innerText || '').trim(),
     });
@@ -199,7 +208,7 @@ cli({
   name: 'backlinks',
   access: 'read',
   description:
-    '查看网站反向链接（SEMrush / sem.3ue.com，固定 Active + Follow）',
+    '查看网站反向链接（SEMrush / sem.3ue.com，默认 Active + Follow）',
   domain: 'sem.3ue.com',
   strategy: Strategy.UI,
   browser: true,
@@ -217,12 +226,19 @@ cli({
       default: DEFAULT_BACKLINKS_LIMIT,
       help: `返回条数（1-${MAX_BACKLINKS_LIMIT}，默认 ${DEFAULT_BACKLINKS_LIMIT}）`,
     },
+    {
+      name: 'dofollow',
+      type: 'string',
+      default: 'true',
+      help: '链接属性：true/follow（默认）、false/nofollow、all（全部）',
+    },
   ],
   columns: [...COLUMNS],
   func: async (page, kwargs) => {
     const domain = normalizeDomain(kwargs.domain);
     const limit = normalizeBacklinksLimit(kwargs.limit);
-    const url = buildBacklinksUrl(domain);
+    const dofollowFilter = normalizeDofollow(kwargs.dofollow);
+    const url = buildBacklinksUrl(domain, dofollowToBaRel(dofollowFilter));
 
     await openSemDeepLink(page as PageLike, url, PAGE_STATUS_JS);
 
@@ -264,10 +280,17 @@ cli({
         `Backlinks page failed to load for ${domain}. Try refreshing in the browser.`,
       );
     }
+    const filterHint =
+      dofollowFilter === true
+        ? ' follow'
+        : dofollowFilter === false
+          ? ' nofollow'
+          : '';
+
     if (status === 'empty') {
       throw new EmptyResultError(
         'sem backlinks',
-        `No active follow backlinks found for ${domain}`,
+        `No active${filterHint} backlinks found for ${domain}`,
       );
     }
     if (status !== 'ready') {
@@ -284,6 +307,7 @@ cli({
         internalLinksRaw: string;
         anchor: string;
         targetUrl: string;
+        dofollow: boolean;
         firstSeen: string;
         lastSeen: string;
       }>
@@ -292,7 +316,7 @@ cli({
     if (!Array.isArray(parsed) || parsed.length === 0) {
       throw new EmptyResultError(
         'sem backlinks',
-        `No active follow backlinks found for ${domain}`,
+        `No active${filterHint} backlinks found for ${domain}`,
       );
     }
 
@@ -307,6 +331,7 @@ cli({
         internalLinks: Number.isFinite(internalLinks) ? internalLinks : null,
         anchor: r.anchor,
         targetUrl: r.targetUrl,
+        dofollow: r.dofollow !== false,
         firstSeen: r.firstSeen,
         lastSeen: r.lastSeen,
       };

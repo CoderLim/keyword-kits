@@ -48,14 +48,20 @@ export function buildOverviewUrl(domain: string): string {
   return `${SITE_ORIGIN}/analytics/overview/?${qs.toString()}`;
 }
 
-/** Active + follow backlinks list (filters locked in URL). */
-export function buildBacklinksUrl(domain: string): string {
+/**
+ * Active backlinks list. Optional ba_rel from --dofollow:
+ * follow / nofollow / omit (all).
+ */
+export function buildBacklinksUrl(
+  domain: string,
+  baRel?: string,
+): string {
   const qs = new URLSearchParams({
     q: domain,
     searchType: 'domain',
     ba_mt: 'active',
-    ba_rel: 'follow',
   });
+  if (baRel) qs.set('ba_rel', baRel);
   return `${SITE_ORIGIN}/analytics/backlinks/backlinks/?${qs.toString()}`;
 }
 

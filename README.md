@@ -272,18 +272,21 @@ DNS 生效可能需要最多 48 小时。
 
 查看指定网站的反向链接列表。
 
-**固定默认筛选（一期不暴露为参数）：**
+**默认筛选：**
 
 | 项 | 值 |
 |----|-----|
 | duration | `28d` |
 | sort | `DomainScore` |
 | status | `Active` |
+| follow | 全部（可用 `--dofollow` 筛选 DoFollow / NoFollow） |
+
+> 注意：SimilarWeb 表格行数据**不含**逐条 dofollow 字段（React record 无 Follow），仅支持页面级筛选。
 
 对应页面：
 
 ```
-https://sim.3ue.com/#/digitalsuite/acquisition/backlinks/table/999/?duration=28d&key={domain}&sort=DomainScore&status=Active
+https://sim.3ue.com/#/digitalsuite/acquisition/backlinks/table/999/?duration=28d&key={domain}&sort=DomainScore&status=Active[&follow=DoFollowOnly|NoFollowOnly]
 ```
 
 #### 用法
@@ -291,6 +294,7 @@ https://sim.3ue.com/#/digitalsuite/acquisition/backlinks/table/999/?duration=28d
 ```bash
 opencli sim backlinks stripe.com
 opencli sim backlinks stripe.com --limit 20 -f json
+opencli sim backlinks stripe.com --dofollow true --limit 20 -f json
 opencli sim backlinks https://www.stripe.com/pricing --limit 10 -f yaml
 ```
 
@@ -300,6 +304,7 @@ opencli sim backlinks https://www.stripe.com/pricing --limit 10 -f yaml
 |------|------|------|------|------|
 | `domain` | string | 是 | — | 域名或 URL，会规范化为 host |
 | `--limit` | int | 否 | `50` | 返回条数，范围 `1–100` |
+| `--dofollow` | string | 否 | `all` | `true`（DoFollow）/ `false`（NoFollow）/ `all` |
 
 #### 输出列
 

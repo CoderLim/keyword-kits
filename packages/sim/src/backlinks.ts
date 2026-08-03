@@ -10,7 +10,9 @@
  *     The first column's data-automation-field is the 0-based row index ("0","1",…),
  *     not a stable column id — read rank from the first td text instead.
  *     Page URL:
- *     /#/digitalsuite/acquisition/backlinks/table/999/?duration=28d&key={domain}&sort=DomainScore&status=Active
+ *     /#/digitalsuite/acquisition/backlinks/table/999/?duration=28d&key={domain}&sort=DomainScore&status=Active[&follow=DoFollowOnly|NoFollowOnly]
+ *     Row React record has no Follow/IsDoFollow field (2026-08-03); page-level
+ *     filter only via `follow=` / data-automation backlinks-table-filter-*.
  *     Underlying JSON at pro.similarweb.com/api/backlinks/backlinks is blocked for
  *     PAGE_FETCH by GMITM (fetch wasm crash / XHR 405); CDP network capture empty.
  *   - auth source: Chrome session cookies on sim.3ue.com (GMITM_*)
@@ -31,6 +33,10 @@ import {
   MAX_BACKLINKS_LIMIT,
   normalizeBacklinksLimit,
 } from './lib/backlinks-limit.js';
+import {
+  dofollowToFollowParam,
+  normalizeDofollow,
+} from './lib/dofollow.js';
 
 const SITE_ORIGIN = 'https://sim.3ue.com';
 const LOAD_TIMEOUT_SEC = 90;
@@ -82,13 +88,17 @@ export function normalizeDomain(raw: unknown): string {
   return host;
 }
 
-function buildBacklinksUrl(domain: string): string {
+export function buildBacklinksUrl(
+  domain: string,
+  follow?: string,
+): string {
   const qs = new URLSearchParams({
     duration: '28d',
     key: domain,
     sort: 'DomainScore',
     status: 'Active',
   });
+  if (follow) qs.set('follow', follow);
   qs.set('_', String(Date.now()));
   return `${SITE_ORIGIN}/#/digitalsuite/acquisition/backlinks/table/999/?${qs.toString()}`;
 }
@@ -167,12 +177,19 @@ cli({
       default: DEFAULT_BACKLINKS_LIMIT,
       help: `返回条数（1-${MAX_BACKLINKS_LIMIT}，默认 ${DEFAULT_BACKLINKS_LIMIT}）`,
     },
+    {
+      name: 'dofollow',
+      type: 'string',
+      default: 'all',
+      help: '链接属性筛选：true（DoFollow）、false（NoFollow）、all（默认，全部）',
+    },
   ],
   columns: [...COLUMNS],
   func: async (page, kwargs) => {
     const domain = normalizeDomain(kwargs.domain);
     const limit = normalizeBacklinksLimit(kwargs.limit);
-    const url = buildBacklinksUrl(domain);
+    const dofollowFilter = normalizeDofollow(kwargs.dofollow);
+    const url = buildBacklinksUrl(domain, dofollowToFollowParam(dofollowFilter));
 
     if (typeof page.newTab === 'function' && typeof page.selectTab === 'function') {
       const tabId = await page.newTab(url);
