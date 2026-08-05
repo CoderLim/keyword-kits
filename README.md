@@ -1,4 +1,4 @@
-# opencli plugins (sim + google-trends + query-domain + ahrefs + namecheap)
+# opencli plugins (sim + google-trends + query-domain + ahrefs + namecheap + sem + aitdk)
 
 基于 [opencli](https://github.com/jackwener/OpenCLI) 的插件 monorepo：
 
@@ -9,6 +9,8 @@
 | [`packages/query-domain`](packages/query-domain) | query.domains 关键词域名列表，`queryDomain search`，PUBLIC，无需 Chrome |
 | [`packages/ahrefs`](packages/ahrefs) | Ahrefs 免费 KD + Backlink Checker（DR + 外链），尽量免登录；需 Chrome Bridge（Strategy.UI） |
 | [`packages/namecheap`](packages/namecheap) | Namecheap 域名 Custom DNS nameserver 设置，需已登录 Chrome |
+| [`packages/sem`](packages/sem) | SEMrush（`sem.3ue.com`）域名查询与反向链接，需已登录 Chrome |
+| [`packages/aitdk`](packages/aitdk) | AITDK 域名 SEO 数据快照（whois + 流量），`aitdk get-data`，PUBLIC，无需 Chrome |
 
 仓库：https://github.com/CoderLim/keyword-kits
 
@@ -38,7 +40,7 @@ opencli doctor   # 需显示 Everything looks good
 
 **ahrefs** 只需 Chrome Bridge，**不需要** Ahrefs 账号登录。
 
-**google-trends** 与 **query-domain** 不需要 Chrome。
+**google-trends**、**query-domain** 与 **aitdk** 不需要 Chrome。
 
 ---
 
@@ -55,6 +57,8 @@ opencli plugin install file://$(pwd)/packages/google-trends
 opencli plugin install file://$(pwd)/packages/query-domain
 opencli plugin install file://$(pwd)/packages/ahrefs
 opencli plugin install file://$(pwd)/packages/namecheap
+opencli plugin install file://$(pwd)/packages/sem
+opencli plugin install file://$(pwd)/packages/aitdk
 ```
 
 从 GitHub monorepo 安装：
@@ -67,6 +71,8 @@ opencli plugin install github:CoderLim/keyword-kits/google-trends
 opencli plugin install github:CoderLim/keyword-kits/query-domain
 opencli plugin install github:CoderLim/keyword-kits/ahrefs
 opencli plugin install github:CoderLim/keyword-kits/namecheap
+opencli plugin install github:CoderLim/keyword-kits/sem
+opencli plugin install github:CoderLim/keyword-kits/aitdk
 ```
 
 确认：
@@ -79,6 +85,7 @@ opencli queryDomain --help
 opencli ahrefs kd --help
 opencli ahrefs backlinks --help
 opencli namecheap set-nameserver --help
+opencli aitdk get-data --help
 ```
 
 更新 / 卸载：
@@ -89,11 +96,15 @@ opencli plugin update google-trends
 opencli plugin update query-domain
 opencli plugin update ahrefs
 opencli plugin update namecheap
+opencli plugin update sem
+opencli plugin update aitdk
 opencli plugin uninstall sim
 opencli plugin uninstall google-trends
 opencli plugin uninstall query-domain
 opencli plugin uninstall ahrefs
 opencli plugin uninstall namecheap
+opencli plugin uninstall sem
+opencli plugin uninstall aitdk
 ```
 
 ---
@@ -111,6 +122,7 @@ opencli plugin uninstall namecheap
 | `ahrefs kd` | ahrefs | 免费 Keyword Difficulty |
 | `ahrefs backlinks` | ahrefs | 免费 Backlink Checker（DR + 外链） |
 | `namecheap set-nameserver` | namecheap | 设置域名 Custom DNS nameservers |
+| `aitdk get-data` | aitdk | 域名 SEO 数据快照（whois + 流量，无需 Chrome） |
 
 官方内置 `google trends`（RSS 日报热搜）仍可用，与本仓库的 `trendsNow` 互不覆盖。
 
@@ -157,6 +169,48 @@ opencli queryDomain search "ai image" -f json
 输出列：`domain`, `year`, `dr`, `forSale`, `registered`, `expires`, `existed`
 
 遇 HTTP 429 时稍后重试，或在站点登录 / 升级 Pro。
+
+---
+
+## `aitdk get-data`
+
+查询 [AITDK](https://extension.aitdk.com/) 的域名 SEO 数据快照（whois + 流量）。PUBLIC，无需 Chrome、无需登录。
+
+底层调用 `wapi.aitdk.com/api/v1/bulk`（与 AITDK 浏览器扩展同款接口），请求用扩展内置的静态密钥签名，因此无需账号。
+
+```bash
+opencli aitdk get-data ahrefs.com
+opencli aitdk get-data ahrefs.com -f json
+opencli aitdk get-data https://www.ahrefs.com/pricing -f yaml
+```
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| `domain` | string（位置） | 目标域名或 URL，会规范化为 host（去掉协议 / 路径 / `www.`） |
+
+**默认表（table）输出列：** `domain`、`visits`、`globalRank`、`countryRank`、`bounceRate`、`pagePerVisit`、`timeOnSite`、`registrar`、`registered`、`expires`
+
+**`-f json` / `-f yaml` 额外返回的嵌套字段：**
+
+| 字段 | 含义 |
+|------|------|
+| `title` / `description` | 站点标题 / 描述 |
+| `updated` | whois 最近变更日期 |
+| `dataMonth` / `dataYear` | 流量数据归属月份 / 年份 |
+| `nameservers` / `status` | 域名 NS 列表 / 域名状态 |
+| `trafficSources` | 流量来源占比（direct / searchOrganic / social / referrals / mail / genAi …） |
+| `topKeywords` | 自然 Top 关键词（name / volume / cpc / estimatedValue） |
+| `topRegions` | Top 地区（name / value） |
+| `aiTraffic` | 各 AI 来源（chatgpt.com / claude.ai / gemini …）最新引流值 |
+| `monthlyVisits` | 近 12 个月月访问量（`YYYY-MM-DD` -> visits） |
+
+**未知 / 未注册域名：** 返回 `EMPTY_RESULT`（exit 66），提示无数据。
+
+**频率限制（429）：** 稍后重试。
+
+**签名失效（403）：** AITDK 扩展轮换了内置密钥；需从 `extension.aitdk.com` 的 JS bundle 重新提取 `secretKey` 并更新 `packages/aitdk/src/lib.ts` 的 `SECRET`。
+
+设计文档：[`docs/superpowers/plans/2026-08-05-aitdk-get-data.md`](docs/superpowers/plans/2026-08-05-aitdk-get-data.md)
 
 ---
 
@@ -504,6 +558,13 @@ OPENCLI_BROWSER_COMMAND_TIMEOUT=180 opencli sim web-ranking --limit 10 -f json
 - **源码**：`packages/ahrefs/src/kd.ts`、`packages/ahrefs/src/backlinks.ts`  
 - **产物**：`packages/ahrefs/kd.js`、`packages/ahrefs/backlinks.js`（`npm run build`，gitignore）
 
+### aitdk
+
+- **策略**：`Strategy.PUBLIC`（无需浏览器、无需登录）  
+- **API**：`wapi.aitdk.com/api/v1/bulk`（SSE），用扩展内置静态密钥签名（`SHA-256(canonical + secret)`）  
+- **源码**：`packages/aitdk/src/lib.ts`、`packages/aitdk/src/get-data.ts`  
+- **产物**：`packages/aitdk/get-data.js`（`npm run build`，gitignore）
+
 设计文档（sim）：
 
 - [`docs/superpowers/specs/2026-07-23-sim-backlinks-design.md`](docs/superpowers/specs/2026-07-23-sim-backlinks-design.md)
@@ -527,12 +588,14 @@ opencli plugin install file://$(pwd)/packages/google-trends
 opencli plugin install file://$(pwd)/packages/query-domain
 opencli plugin install file://$(pwd)/packages/ahrefs
 opencli plugin install file://$(pwd)/packages/namecheap
+opencli plugin install file://$(pwd)/packages/aitdk
 
 opencli google trendsNow --limit 5 -f json
 opencli sim backlinks stripe.com --limit 5 -f json
 opencli queryDomain search "ai image" -f json
 OPENCLI_BROWSER_COMMAND_TIMEOUT=180 opencli ahrefs kd "keyword research" -f json
 OPENCLI_BROWSER_COMMAND_TIMEOUT=180 opencli ahrefs backlinks ahrefs.com -f json
+opencli aitdk get-data ahrefs.com -f json
 ```
 
 目录结构：
@@ -570,6 +633,12 @@ keyword-kits/
 │       ├── package.json
 │       ├── src/
 │       └── *.js                 # build 产物
+│   ├── aitdk/
+│   │   ├── opencli-plugin.json
+│   │   ├── package.json
+│   │   ├── src/lib.ts
+│   │   ├── src/get-data.ts
+│   │   └── get-data.js          # build 产物
 ├── scripts/
 ├── .cursor/skills/
 ├── README.md
@@ -594,6 +663,9 @@ keyword-kits/
 | 命令未注册 | 确认已装对应子插件目录；`opencli plugin list` |
 | 改了 TS 无效果 | 重新 `npm run build` |
 | `trendsNow` 无数据 | 换 `geo` / `hours` / `status`，或稍后重试 |
+| `EMPTY_RESULT`（aitdk，未知域名） | 域名未注册 / 无流量数据；换有效域名 |
+| `RATE_LIMITED` 429（aitdk） | wapi.aitdk.com 频率限制；稍后重试 |
+| 403 签名被拒（aitdk） | 扩展轮换了内置密钥；从 `extension.aitdk.com` JS bundle 重新提取 `secretKey` 更新 `packages/aitdk/src/lib.ts` |
 
 ---
 

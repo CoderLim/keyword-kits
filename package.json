@@ -1,8 +1,8 @@
 {
   "name": "opencli-plugins",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
-  "description": "OpenCLI plugin monorepo: sim + google-trends + query-domain + ahrefs + namecheap + sem",
+  "description": "OpenCLI plugin monorepo: sim + google-trends + query-domain + ahrefs + namecheap + sem + aitdk",
   "repository": {
     "type": "git",
     "url": "https://github.com/CoderLim/keyword-kits.git"
@@ -14,16 +14,18 @@
     "packages/query-domain",
     "packages/ahrefs",
     "packages/namecheap",
-    "packages/sem"
+    "packages/sem",
+    "packages/aitdk"
   ],
   "scripts": {
-    "build": "npm run build -w opencli-plugin-sim && npm run build -w opencli-plugin-google-trends && npm run build -w opencli-plugin-query-domain && npm run build -w opencli-plugin-ahrefs && npm run build -w opencli-plugin-namecheap && npm run build -w opencli-plugin-sem",
+    "build": "npm run build -w opencli-plugin-sim && npm run build -w opencli-plugin-google-trends && npm run build -w opencli-plugin-query-domain && npm run build -w opencli-plugin-ahrefs && npm run build -w opencli-plugin-namecheap && npm run build -w opencli-plugin-sem && npm run build -w opencli-plugin-aitdk",
     "build:sim": "npm run build -w opencli-plugin-sim",
     "build:google-trends": "npm run build -w opencli-plugin-google-trends",
     "build:query-domain": "npm run build -w opencli-plugin-query-domain",
     "build:ahrefs": "npm run build -w opencli-plugin-ahrefs",
     "build:namecheap": "npm run build -w opencli-plugin-namecheap",
     "build:sem": "npm run build -w opencli-plugin-sem",
+    "build:aitdk": "npm run build -w opencli-plugin-aitdk",
     "subdomain-keywords": "node scripts/subdomain-keywords.mjs"
   }
 }

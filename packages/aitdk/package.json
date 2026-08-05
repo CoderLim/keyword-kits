@@ -1,0 +1,17 @@
+{
+  "name": "opencli-plugin-aitdk",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "opencli plugin for AITDK domain snapshot (wapi.aitdk.com)",
+  "license": "MIT",
+  "peerDependencies": {
+    "@jackwener/opencli": ">=1.8.6"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.1"
+  },
+  "scripts": {
+    "build": "npx esbuild src/get-data.ts --bundle --outfile=get-data.js --format=esm --platform=node --packages=external",
+    "test": "node --experimental-strip-types --test src/lib.test.ts"
+  }
+}

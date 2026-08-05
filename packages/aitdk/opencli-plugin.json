@@ -1,0 +1,6 @@
+{
+  "name": "aitdk",
+  "version": "0.1.0",
+  "description": "AITDK domain snapshot (aitdk get-data) via wapi.aitdk.com",
+  "opencli": ">=1.8.6"
+}

@@ -18,3 +18,4 @@ packages/ahrefs/backlinks.js
 packages/ahrefs/get-dr.js
 packages/sem/query-domain.js
 packages/sem/backlinks.js
+packages/aitdk/get-data.js
