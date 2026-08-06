@@ -124,7 +124,7 @@ async function fetchBulk(domain: string): Promise<string> {
     throw new CliError(
       'AUTH_ERROR',
       `wapi.aitdk.com rejected the signed request (HTTP ${resp.status})`,
-      'The bundled signing secret may have rotated; re-extract from extension.aitdk.com',
+      'The bundled signing secret may have rotated; re-run: npm run extract:aitdk-secret (then update SECRET in packages/aitdk/src/lib.ts and rebuild)',
     );
   }
   if (!resp.ok) {

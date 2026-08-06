@@ -5,7 +5,7 @@
 | 子插件 | 说明 |
 |--------|------|
 | [`packages/sim`](packages/sim) | SimilarWeb（`sim.3ue.com`），需已登录 Chrome |
-| [`packages/google-trends`](packages/google-trends) | Google Trends 扩展，挂到 `opencli google …`（PUBLIC，无需浏览器） |
+| [`packages/google-trends`](packages/google-trends) | Google Trends：`google-trends now` + `google-trends explore`（PUBLIC，无需浏览器） |
 | [`packages/query-domain`](packages/query-domain) | query.domains 关键词域名列表，`queryDomain search`，PUBLIC，无需 Chrome |
 | [`packages/ahrefs`](packages/ahrefs) | Ahrefs 免费 KD + Backlink Checker（DR + 外链），尽量免登录；需 Chrome Bridge（Strategy.UI） |
 | [`packages/namecheap`](packages/namecheap) | Namecheap 域名 Custom DNS nameserver 设置，需已登录 Chrome |
@@ -80,7 +80,8 @@ opencli plugin install github:CoderLim/keyword-kits/aitdk
 ```bash
 opencli plugin list
 opencli sim --help
-opencli google trendsNow --help
+opencli google-trends now --help
+opencli google-trends explore --help
 opencli queryDomain --help
 opencli ahrefs kd --help
 opencli ahrefs backlinks --help
@@ -208,7 +209,7 @@ opencli aitdk get-data https://www.ahrefs.com/pricing -f yaml
 
 **频率限制（429）：** 稍后重试。
 
-**签名失效（403）：** AITDK 扩展轮换了内置密钥；需从 `extension.aitdk.com` 的 JS bundle 重新提取 `secretKey` 并更新 `packages/aitdk/src/lib.ts` 的 `SECRET`。
+**签名失效（403）：** AITDK 扩展轮换了内置密钥。运行 `npm run extract:aitdk-secret`（脚本会从 `extension.aitdk.com` 的 JS bundle 重新解码出当前 `secretKey` 并发一个签名请求验证 HTTP 200），把打印出的 `export const SECRET = '...';` 粘进 `packages/aitdk/src/lib.ts`，再 `npm run build:aitdk && opencli plugin update aitdk`。
 
 设计文档：[`docs/superpowers/plans/2026-08-05-aitdk-get-data.md`](docs/superpowers/plans/2026-08-05-aitdk-get-data.md)
 
@@ -665,7 +666,7 @@ keyword-kits/
 | `trendsNow` 无数据 | 换 `geo` / `hours` / `status`，或稍后重试 |
 | `EMPTY_RESULT`（aitdk，未知域名） | 域名未注册 / 无流量数据；换有效域名 |
 | `RATE_LIMITED` 429（aitdk） | wapi.aitdk.com 频率限制；稍后重试 |
-| 403 签名被拒（aitdk） | 扩展轮换了内置密钥；从 `extension.aitdk.com` JS bundle 重新提取 `secretKey` 更新 `packages/aitdk/src/lib.ts` |
+| 403 签名被拒（aitdk） | 扩展轮换了内置密钥；运行 `npm run extract:aitdk-secret` 重新提取 `secretKey`，更新 `packages/aitdk/src/lib.ts` 后 `npm run build:aitdk && opencli plugin update aitdk` |
 
 ---
 

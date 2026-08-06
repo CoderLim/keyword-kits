@@ -26,6 +26,7 @@
     "build:namecheap": "npm run build -w opencli-plugin-namecheap",
     "build:sem": "npm run build -w opencli-plugin-sem",
     "build:aitdk": "npm run build -w opencli-plugin-aitdk",
+    "extract:aitdk-secret": "node scripts/extract-aitdk-secret.mjs",
     "subdomain-keywords": "node scripts/subdomain-keywords.mjs"
   }
 }

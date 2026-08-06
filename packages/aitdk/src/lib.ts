@@ -11,7 +11,12 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { ArgumentError } from '@jackwener/opencli/errors';
 
-/** Static signing secret extracted from extension.aitdk.com bundle. */
+/**
+ * Static signing secret extracted from the extension.aitdk.com JS bundle.
+ * If wapi.aitdk.com starts returning HTTP 403, the extension rotated this
+ * value; re-extract with:  npm run extract:aitdk-secret
+ * (scripts/extract-aitdk-secret.mjs decodes the obfuscated bundle + live-verifies).
+ */
 export const SECRET = '541737bb-02ce-4fb6-8157-3c7166873777';
 export const BASE_URL = 'https://wapi.aitdk.com';
 export const BULK_PATH = '/api/v1/bulk';
