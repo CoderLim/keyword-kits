@@ -8,7 +8,9 @@ packages/sim/backlinks.js
 packages/sim/landing-pages.js
 packages/sim/keyword-generator.js
 packages/sim/web-ranking.js
-packages/google-trends/trends-now.js
+packages/google-trends/now.js
+packages/google-trends/explore.js
+packages/google-trends/explore-lib.js
 packages/query-domain/lib.js
 packages/query-domain/search.js
 packages/ahrefs/lib.js

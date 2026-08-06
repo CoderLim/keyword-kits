@@ -1,9 +1,9 @@
 ---
 name: trendsnow-keywords
 description: >-
-  通过 opencli google trendsNow 拉取近期热搜词，逐词判断哪些适合做成工具站或游戏站等网站，
+  通过 opencli google-trends now 拉取近期热搜词（Trending Now），逐词判断哪些适合做成工具站或游戏站等网站，
   并给出中文翻译。不要强行把关键词解读成符合预期的需求。
-  在用户提到 trendsNow 热词、热搜建站机会、工具站/游戏站选题、trending keywords 建站时使用。
+  在用户提到 google-trends now、trendsNow 热词、热搜建站机会、工具站/游戏站选题、trending keywords 建站时使用。
 ---
 
 # trendsnow-keywords
@@ -20,14 +20,14 @@ description: >-
 2. 已安装 **google-trends** 子插件：  
    `opencli plugin install file://$(pwd)/packages/google-trends`  
    或 `github:CoderLim/keyword-kits/google-trends`
-3. 确认命令可用：`opencli google trendsNow --help`
+3. 确认命令可用：`opencli google-trends now --help`
 
 ## 拉取热词
 
 默认：
 
 ```bash
-opencli google trendsNow --geo US --status active --hours 24 --limit 50 -f json
+opencli google-trends now --geo US --status active --hours 24 --limit 50 -f json
 ```
 
 用户若指定 `geo` / `hours` / `status` / `limit`，按其参数执行。`hours` 仅允许 `4|24|48|168`。
@@ -115,6 +115,6 @@ opencli google trendsNow --geo US --status active --hours 24 --limit 50 -f json
 
 ## 注意
 
-- 命令是 `opencli google trendsNow`（不是 trendsNew / trends）。
+- 命令是 `opencli google-trends now`（不是 `google trendsNow` / trendsNew / trends）。
 - 不支持翻页；要更多候选就加大 `--limit`（≤500）。
 - 分析在 Agent 侧完成，无需另写脚本；拉取失败时展示 opencli 错误，不要假装有结果。

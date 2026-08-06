@@ -118,26 +118,27 @@ opencli plugin uninstall aitdk
 | `sim landing-pages` | sim | 自然着陆页（默认新点击量） |
 | `sim keyword-generator` | sim | 关键词生成器（phrase match，可筛 volume/CPC/难度） |
 | `sim web-ranking` | sim | 站点排名（搜索自然流量；可按变动/月访问量排序） |
-| `google trendsNow` | google-trends | Trending Now（支持 geo / status / hours） |
+| `google-trends now` | google-trends | Trending Now（支持 geo / status / hours） |
+| `google-trends explore` | google-trends | Explore：兴趣曲线 + 相关搜索（最多 5 词） |
 | `queryDomain search` | query-domain | 关键词相关域名列表（固定 14 TLD） |
 | `ahrefs kd` | ahrefs | 免费 Keyword Difficulty |
 | `ahrefs backlinks` | ahrefs | 免费 Backlink Checker（DR + 外链） |
 | `namecheap set-nameserver` | namecheap | 设置域名 Custom DNS nameservers |
 | `aitdk get-data` | aitdk | 域名 SEO 数据快照（whois + 流量，无需 Chrome） |
 
-官方内置 `google trends`（RSS 日报热搜）仍可用，与本仓库的 `trendsNow` 互不覆盖。
+官方内置 `google trends`（RSS 日报热搜）仍可用，与本仓库的 `google-trends now` / `explore` 互不覆盖。
 
 ---
 
-## `google trendsNow`
+## `google-trends now`
 
 拉取 [Trending Now](https://trends.google.com/trending?geo=US&hl=en-US&status=active&hours=24) 数据（batchexecute PUBLIC API）。
 
 ```bash
-opencli google trendsNow
-opencli google trendsNow --geo JP --status active --hours 24 --limit 25 -f json
-opencli google trendsNow --status all --hours 4
-opencli google trendsNow --status ended --hours 48 --limit 50
+opencli google-trends now
+opencli google-trends now --geo JP --status active --hours 24 --limit 25 -f json
+opencli google-trends now --status all --hours 4
+opencli google-trends now --status ended --hours 48 --limit 50
 ```
 
 | 参数 | 类型 | 默认 | 说明 |
@@ -151,6 +152,27 @@ opencli google trendsNow --status ended --hours 48 --limit 50
 输出列：`title`、`volume`、`increase`、`status`、`started`、`ended`、`breakdown`
 
 **分页：** 不支持。接口一次返回当前 `geo`/`hours` 下的全部条目；网页上的翻页是前端切片。本命令只在本地按 `--status` 过滤后再用 `--limit` 截断（没有 `--page` / `--offset`）。要更多结果就加大 `--limit`。
+
+---
+
+## `google-trends explore`
+
+拉取 [Explore](https://trends.google.com/trends/explore) 的兴趣随时间曲线 + 相关搜索（top / rising）。PUBLIC token dance；推荐 `-f json`。
+
+```bash
+opencli google-trends explore "pdf to jpg" -f json
+opencli google-trends explore "pdf to jpg" "jpg to pdf" --geo US --time "today 12-m" -f json
+```
+
+| 参数 | 类型 | 默认 | 说明 |
+|------|------|------|------|
+| `keyword`…`keyword5` | string | — | 1–5 个关键词（位置参数）；也可单独传逗号分隔 |
+| `--geo` | string | `US` | 地区码；空字符串表示全球 |
+| `--time` | string | `today 12-m` | Explore 时间范围（如 `now 7-d`、`today 3-m`） |
+| `--hl` | string | `en-US` | 语言 |
+| `--tz` | string | `0` | 时区偏移（分钟） |
+
+JSON 字段：`keywords`、`geo`、`time`、`interest[]`（`time` / `formattedTime` / `values`）、`related[]`（每词 `top` / `rising`）。遇 HTTP 429 时稍后重试或减少词数。
 
 ---
 
@@ -548,9 +570,10 @@ OPENCLI_BROWSER_COMMAND_TIMEOUT=180 opencli sim web-ranking --limit 10 -f json
 ### google-trends
 
 - **策略**：`Strategy.PUBLIC`（无需浏览器）  
-- **API**：`trends.google.com/_/TrendsUi/data/batchexecute`（`i0OFE`）  
-- **源码**：`packages/google-trends/src/trends-now.ts`  
-- **产物**：`packages/google-trends/trends-now.js`
+- **API（now）**：`trends.google.com/_/TrendsUi/data/batchexecute`（`i0OFE`）  
+- **API（explore）**：`/trends/api/explore` → `widgetdata/multiline` + `widgetdata/relatedsearches`  
+- **源码**：`packages/google-trends/src/now.ts`、`explore.ts`、`explore-lib.ts`  
+- **产物**：`packages/google-trends/now.js`、`explore.js`
 
 ### ahrefs
 
@@ -591,7 +614,8 @@ opencli plugin install file://$(pwd)/packages/ahrefs
 opencli plugin install file://$(pwd)/packages/namecheap
 opencli plugin install file://$(pwd)/packages/aitdk
 
-opencli google trendsNow --limit 5 -f json
+opencli google-trends now --limit 5 -f json
+opencli google-trends explore "pdf to jpg" "jpg to pdf" --geo US -f json
 opencli sim backlinks stripe.com --limit 5 -f json
 opencli queryDomain search "ai image" -f json
 OPENCLI_BROWSER_COMMAND_TIMEOUT=180 opencli ahrefs kd "keyword research" -f json
@@ -614,8 +638,11 @@ keyword-kits/
 │   ├── google-trends/
 │   │   ├── opencli-plugin.json
 │   │   ├── package.json
-│   │   ├── src/trends-now.ts
-│   │   └── trends-now.js
+│   │   ├── src/now.ts
+│   │   ├── src/explore.ts
+│   │   ├── src/explore-lib.ts
+│   │   ├── now.js
+│   │   └── explore.js
 │   ├── query-domain/
 │   │   ├── opencli-plugin.json
 │   │   ├── package.json
@@ -663,7 +690,8 @@ keyword-kits/
 | Ahrefs 偶发超时 / 空结果（ahrefs） | 页面加载或 Turnstile 较慢；加大 `OPENCLI_BROWSER_COMMAND_TIMEOUT` 后重试 |
 | 命令未注册 | 确认已装对应子插件目录；`opencli plugin list` |
 | 改了 TS 无效果 | 重新 `npm run build` |
-| `trendsNow` 无数据 | 换 `geo` / `hours` / `status`，或稍后重试 |
+| `google-trends now` 无数据 | 换 `geo` / `hours` / `status`，或稍后重试 |
+| `google-trends explore` 429 | Explore widgetdata 限流；稍后重试或减少关键词 |
 | `EMPTY_RESULT`（aitdk，未知域名） | 域名未注册 / 无流量数据；换有效域名 |
 | `RATE_LIMITED` 429（aitdk） | wapi.aitdk.com 频率限制；稍后重试 |
 | 403 签名被拒（aitdk） | 扩展轮换了内置密钥；运行 `npm run extract:aitdk-secret` 重新提取 `secretKey`，更新 `packages/aitdk/src/lib.ts` 后 `npm run build:aitdk && opencli plugin update aitdk` |
@@ -687,14 +715,14 @@ OPENCLI_BROWSER_COMMAND_TIMEOUT=180 npm run subdomain-keywords -- --json
 
 路径：[`.cursor/skills/trendsnow-keywords/SKILL.md`](.cursor/skills/trendsnow-keywords/SKILL.md)
 
-通过 `opencli google trendsNow` 拉取近期热搜，逐词判断哪些适合做成**工具站 / 游戏站**等网站，并给出中文翻译。**不要强行把关键词解读成符合预期的需求**；无可做的词就如实说明。依赖已安装的 **google-trends** 子插件。
+通过 `opencli google-trends now` 拉取近期热搜，逐词判断哪些适合做成**工具站 / 游戏站**等网站，并给出中文翻译。**不要强行把关键词解读成符合预期的需求**；无可做的词就如实说明。依赖已安装的 **google-trends** 子插件。
 
-触发示例：`/trendsnow-keywords`，或「用 trendsNow 看看有没有能做工具站的热词」。
+触发示例：`/trendsnow-keywords`，或「用 google-trends now / Trending Now 看看有没有能做工具站的热词」。
 
 默认拉取：
 
 ```bash
-opencli google trendsNow --geo US --status active --hours 24 --limit 50 -f json
+opencli google-trends now --geo US --status active --hours 24 --limit 50 -f json
 ```
 
 ---

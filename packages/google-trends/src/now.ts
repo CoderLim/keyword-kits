@@ -1,5 +1,5 @@
 /**
- * google trendsNow — Google Trends "Trending Now" via public batchexecute API.
+ * google-trends now — Google Trends "Trending Now" via public batchexecute API.
  *
  * Strategy note:
  *   Strategy: PUBLIC
@@ -188,8 +188,8 @@ async function fetchTrendingNow(geo: string, hours: number, hl: string): Promise
 }
 
 cli({
-  site: 'google',
-  name: 'trendsNow',
+  site: 'google-trends',
+  name: 'now',
   access: 'read',
   description: 'Get Google Trends Trending Now searches',
   strategy: Strategy.PUBLIC,

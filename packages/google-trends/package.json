@@ -1,8 +1,8 @@
 {
   "name": "opencli-plugin-google-trends",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
-  "description": "opencli plugin: Google Trends Trending Now (google trendsNow)",
+  "description": "opencli plugin: Google Trends now (Trending Now) + explore (interest + related)",
   "license": "MIT",
   "peerDependencies": {
     "@jackwener/opencli": ">=1.8.6"
@@ -11,6 +11,7 @@
     "esbuild": "^0.28.1"
   },
   "scripts": {
-    "build": "npx esbuild src/trends-now.ts --outfile=trends-now.js --format=esm --platform=node"
+    "build": "npx esbuild src/now.ts --outfile=now.js --format=esm --platform=node && npx esbuild src/explore-lib.ts --outfile=explore-lib.js --format=esm --platform=node && npx esbuild src/explore.ts --bundle --outfile=explore.js --format=esm --platform=node --packages=external",
+    "test": "npm run build && node --test explore-lib.test.mjs"
   }
 }
