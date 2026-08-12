@@ -33,6 +33,7 @@ description: >-
 - `lovable.app`
 - `onrender.com`
 - `workers.dev`
+- `neocities.org`
 
 ## 执行步骤
 

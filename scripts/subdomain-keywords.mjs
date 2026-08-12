@@ -24,6 +24,7 @@ const DOMAINS = [
   'lovable.app',
   'onrender.com',
   'workers.dev',
+  'neocities.org',
 ];
 
 const LIMIT = 10;
