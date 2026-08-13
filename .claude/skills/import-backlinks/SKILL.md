@@ -2,7 +2,7 @@
 name: import-backlinks
 description: >-
   通过 link-master 的 import-backlink-candidates.js 把指定网站的反向链接导入 backlink-candidates.json。
-  标准流程：对一个域名依次导入 sim（100 条）、sem（100 条）、ahrefs（返回多少导入多少）；
+  标准流程：对一个域名依次导入 sim（200 条）、sem（200 条）、ahrefs（返回多少导入多少）；
   ahrefs 易失败，失败不重试直接跳过。底层经 DR 过滤与 hostname 去重。
   标准三源导入结束后，移除本次新增且 hostname 包含 search.yahoo 的候选。
   任务结束必须清理残留（opencli site session；孤儿 chrome-headless-shell）。
@@ -29,8 +29,8 @@ bash /Users/coderlim/.claude/skills/import-backlinks/scripts/import-all.sh <webs
 
 | 步骤 | source | limit | 失败处理 |
 |------|--------|-------|----------|
-| 1 | sim | 100 | 报错但不阻塞后续；exit 码反映其成败 |
-| 2 | sem | 100 | 同上 |
+| 1 | sim | 200 | 报错但不阻塞后续；exit 码反映其成败 |
+| 2 | sem | 200 | 同上 |
 | 3 | ahrefs | 无（返回多少导入多少） | **易失败：失败不重试，直接跳过** |
 | 4 | search.yahoo 过滤 | - | 仅清理本次新增候选；失败时脚本 exit 非 0 |
 
@@ -45,8 +45,8 @@ bash /Users/coderlim/.claude/skills/import-backlinks/scripts/import-all.sh <webs
 
 ```bash
 cd /Users/coderlim/Projects/link-master
-OPENCLI_BROWSER_COMMAND_TIMEOUT=180 node scripts/import-backlink-candidates.js <website> --source sim --limit 100
-OPENCLI_BROWSER_COMMAND_TIMEOUT=180 node scripts/import-backlink-candidates.js <website> --source sem --limit 100
+OPENCLI_BROWSER_COMMAND_TIMEOUT=180 node scripts/import-backlink-candidates.js <website> --source sim --limit 200
+OPENCLI_BROWSER_COMMAND_TIMEOUT=180 node scripts/import-backlink-candidates.js <website> --source sem --limit 200
 OPENCLI_BROWSER_COMMAND_TIMEOUT=180 node scripts/import-backlink-candidates.js <website> --source ahrefs || echo "ahrefs failed, skip"
 ```
 
@@ -54,8 +54,8 @@ OPENCLI_BROWSER_COMMAND_TIMEOUT=180 node scripts/import-backlink-candidates.js <
 
 | source | opencli 命令 | limit | 需 Chrome |
 |--------|--------------|-------|-----------|
-| sim | `opencli sim backlinks <d> --limit <N> -f json` | 1–100 | 是，登录 sim.3ue.com |
-| sem | `opencli sem backlinks <d> --limit <N> --dofollow true -f json` | 1–100 | 是，登录 sem.3ue.com |
+| sim | `opencli sim backlinks <d> --limit <N> -f json` | 1–1000 | 是，登录 sim.3ue.com |
+| sem | `opencli sem backlinks <d> --limit <N> --dofollow true -f json` | 1–1000 | 是，登录 sem.3ue.com |
 | ahrefs | `opencli ahrefs backlinks <d> -f json` | 无 | 是，Chrome Bridge 免登录 |
 | google | `opencli --profile clean google search '<q>' --limit 100 --lang en -f json` | 固定 100 | 是，clean profile |
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Import backlinks for one domain from all three sources in sequence:
-#   1. sim    --limit 100
-#   2. sem    --limit 100
+#   1. sim    --limit 200
+#   2. sem    --limit 200
 #   3. ahrefs (no limit; returns all visible on page)
 # ahrefs is failure-prone: on failure SKIP without retry (do not re-run).
 # sim/sem failures are reported but do not block later steps.
@@ -50,11 +50,11 @@ run_source() {
 
 status=0
 
-echo "=== [1/3] sim --limit 100 ==="
-run_source sim --limit 100 || { echo ">> sim FAILED"; status=1; }
+echo "=== [1/3] sim --limit 200 ==="
+run_source sim --limit 200 || { echo ">> sim FAILED"; status=1; }
 
-echo "=== [2/3] sem --limit 100 ==="
-run_source sem --limit 100 || { echo ">> sem FAILED"; status=1; }
+echo "=== [2/3] sem --limit 200 ==="
+run_source sem --limit 200 || { echo ">> sem FAILED"; status=1; }
 
 echo "=== [3/3] ahrefs (all; skip on failure, NO retry) ==="
 run_source ahrefs || echo ">> ahrefs failed, skipping (no retry)"
