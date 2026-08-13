@@ -1,7 +1,7 @@
 {
-  "version": "0.6.0",
+  "version": "0.7.0",
   "opencli": ">=1.8.6",
-  "description": "OpenCLI plugins: sim + google-trends + query-domain + ahrefs + namecheap + sem + aitdk",
+  "description": "OpenCLI plugins: sim + google-trends + query-domain + ahrefs + namecheap + sem + aitdk + steamdb",
   "plugins": {
     "sim": { "path": "packages/sim" },
     "google-trends": { "path": "packages/google-trends" },
@@ -9,6 +9,7 @@
     "ahrefs": { "path": "packages/ahrefs" },
     "namecheap": { "path": "packages/namecheap" },
     "sem": { "path": "packages/sem" },
-    "aitdk": { "path": "packages/aitdk" }
+    "aitdk": { "path": "packages/aitdk" },
+    "steamdb": { "path": "packages/steamdb" }
   }
 }

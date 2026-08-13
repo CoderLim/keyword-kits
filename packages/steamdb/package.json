@@ -1,0 +1,17 @@
+{
+  "name": "opencli-plugin-steamdb",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "opencli plugin: recently released Steam games ranked by SteamDB follower growth",
+  "license": "MIT",
+  "peerDependencies": {
+    "@jackwener/opencli": ">=1.8.6"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.1"
+  },
+  "scripts": {
+    "build": "npx esbuild src/new-trending-lib.ts --outfile=new-trending-lib.js --format=esm --platform=node && npx esbuild src/new-trending.ts --bundle --outfile=new-trending.js --format=esm --platform=node --packages=external",
+    "test": "npm run build && node --test new-trending-lib.test.mjs"
+  }
+}

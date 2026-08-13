@@ -21,3 +21,5 @@ packages/ahrefs/get-dr.js
 packages/sem/query-domain.js
 packages/sem/backlinks.js
 packages/aitdk/get-data.js
+packages/steamdb/new-trending-lib.js
+packages/steamdb/new-trending.js

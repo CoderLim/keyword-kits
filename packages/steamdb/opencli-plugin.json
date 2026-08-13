@@ -1,0 +1,6 @@
+{
+  "name": "steamdb",
+  "version": "0.1.0",
+  "description": "Recently released Steam games ranked by SteamDB follower growth",
+  "opencli": ">=1.8.6"
+}
