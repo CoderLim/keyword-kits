@@ -26,6 +26,12 @@ import {
   TimeoutError,
 } from '@jackwener/opencli/errors';
 import { cli, Strategy } from '@jackwener/opencli/registry';
+import {
+  appendUniqueRows,
+  backlinkIdentity,
+  parseHasNextState,
+  rowsFingerprint,
+} from './lib/backlinks-pagination.js';
 import { dofollowToBaRel, normalizeDofollow } from './lib/dofollow.js';
 import {
   DEFAULT_BACKLINKS_LIMIT,
@@ -67,6 +73,21 @@ type BacklinkRow = {
   firstSeen: string;
   lastSeen: string;
 };
+
+type RawBacklinkRow = {
+  drRaw: string;
+  sourceTitle: string;
+  sourceUrl: string;
+  externalLinksRaw: string;
+  internalLinksRaw: string;
+  anchor: string;
+  targetUrl: string;
+  dofollow: boolean;
+  firstSeen: string;
+  lastSeen: string;
+};
+
+const PAGE_CHANGE_TIMEOUT_SEC = 30;
 
 const PAGE_STATUS_JS = `(() => {
   const host = location.hostname || '';
@@ -203,6 +224,83 @@ const EXTRACT_ROWS_JS = `(() => {
   return JSON.stringify(out);
 })()`;
 
+const PAGINATION_STATE_JS = `(() => {
+  const next = document.querySelector('[data-test-pagination-next-btn]');
+  return JSON.stringify({
+    hasNext: !!next && !next.disabled && next.getAttribute('aria-disabled') !== 'true',
+  });
+})()`;
+
+const CLICK_NEXT_JS = `(() => {
+  const next = document.querySelector('[data-test-pagination-next-btn]');
+  if (!next || next.disabled || next.getAttribute('aria-disabled') === 'true') return false;
+  next.click();
+  return true;
+})()`;
+
+function mapRawRow(row: RawBacklinkRow): BacklinkRow {
+  const externalLinks = Number(String(row.externalLinksRaw).replace(/[^0-9.-]/g, ''));
+  const internalLinks = Number(String(row.internalLinksRaw).replace(/[^0-9.-]/g, ''));
+  return {
+    dr: parseDr(row.drRaw),
+    sourceTitle: row.sourceTitle,
+    sourceUrl: row.sourceUrl,
+    externalLinks: Number.isFinite(externalLinks) ? externalLinks : null,
+    internalLinks: Number.isFinite(internalLinks) ? internalLinks : null,
+    anchor: row.anchor,
+    targetUrl: row.targetUrl,
+    dofollow: row.dofollow !== false,
+    firstSeen: row.firstSeen,
+    lastSeen: row.lastSeen,
+  };
+}
+
+async function extractRows(page: PageLike): Promise<BacklinkRow[]> {
+  const parsed = parseJsonPayload<RawBacklinkRow[]>(
+    await page.evaluate(EXTRACT_ROWS_JS),
+    'backlinks',
+  );
+  return Array.isArray(parsed) ? parsed.map(mapRawRow) : [];
+}
+
+async function hasNextPage(page: PageLike): Promise<boolean> {
+  try {
+    return parseHasNextState(await page.evaluate(PAGINATION_STATE_JS));
+  } catch (error) {
+    const detail = error instanceof Error ? `: ${error.message}` : '';
+    throw new CommandExecutionError(`Failed to read backlinks pagination state${detail}`);
+  }
+}
+
+async function waitForChangedRows(
+  page: PageLike,
+  previousFingerprint: string,
+  domain: string,
+): Promise<BacklinkRow[] | null> {
+  const deadline = Date.now() + PAGE_CHANGE_TIMEOUT_SEC * 1000;
+  while (Date.now() < deadline) {
+    const status = String(await page.evaluate(PAGE_STATUS_JS));
+    if (status === 'auth' || status === 'wrong-site') {
+      throw new AuthRequiredError(
+        'sem.3ue.com',
+        'Not logged in to sem.3ue.com — open Chrome, enter SEMRUSH via 3ue dashboard, then retry',
+      );
+    }
+    if (status === 'error') {
+      throw new CommandExecutionError(`Backlinks pagination failed for ${domain}.`);
+    }
+    if (status === 'empty') return null;
+    if (status === 'ready' || status === 'hydrating') {
+      const rows = await extractRows(page);
+      if (rows.length > 0 && rowsFingerprint(rows, backlinkIdentity) !== previousFingerprint) {
+        return rows;
+      }
+    }
+    await page.wait(0.25);
+  }
+  return null;
+}
+
 cli({
   site: 'sem',
   name: 'backlinks',
@@ -297,46 +395,39 @@ cli({
       throw new TimeoutError(`sem backlinks (${domain})`, LOAD_TIMEOUT_SEC);
     }
 
-    const raw = await page.evaluate(EXTRACT_ROWS_JS);
-    const parsed = parseJsonPayload<
-      Array<{
-        drRaw: string;
-        sourceTitle: string;
-        sourceUrl: string;
-        externalLinksRaw: string;
-        internalLinksRaw: string;
-        anchor: string;
-        targetUrl: string;
-        dofollow: boolean;
-        firstSeen: string;
-        lastSeen: string;
-      }>
-    >(raw, 'backlinks');
+    let pageRows = await extractRows(page as PageLike);
 
-    if (!Array.isArray(parsed) || parsed.length === 0) {
+    if (pageRows.length === 0) {
       throw new EmptyResultError(
         'sem backlinks',
         `No active${filterHint} backlinks found for ${domain}`,
       );
     }
 
-    const rows: BacklinkRow[] = parsed.map((r) => {
-      const externalLinks = Number(String(r.externalLinksRaw).replace(/[^0-9.-]/g, ''));
-      const internalLinks = Number(String(r.internalLinksRaw).replace(/[^0-9.-]/g, ''));
-      return {
-        dr: parseDr(r.drRaw),
-        sourceTitle: r.sourceTitle,
-        sourceUrl: r.sourceUrl,
-        externalLinks: Number.isFinite(externalLinks) ? externalLinks : null,
-        internalLinks: Number.isFinite(internalLinks) ? internalLinks : null,
-        anchor: r.anchor,
-        targetUrl: r.targetUrl,
-        dofollow: r.dofollow !== false,
-        firstSeen: r.firstSeen,
-        lastSeen: r.lastSeen,
-      };
-    });
+    const accumulated: BacklinkRow[] = [];
+    const seen = new Set<string>();
+    const seenPageFingerprints = new Set<string>();
 
-    return rows.slice(0, limit);
+    for (let pageIndex = 0; pageIndex < MAX_BACKLINKS_LIMIT; pageIndex++) {
+      const currentFingerprint = rowsFingerprint(pageRows, backlinkIdentity);
+      if (seenPageFingerprints.has(currentFingerprint)) break;
+      seenPageFingerprints.add(currentFingerprint);
+
+      appendUniqueRows(accumulated, seen, pageRows, backlinkIdentity, limit);
+      if (accumulated.length >= limit || !(await hasNextPage(page as PageLike))) break;
+
+      const clicked = await page.evaluate(CLICK_NEXT_JS);
+      if (!(clicked === true || clicked === 'true')) break;
+
+      const nextRows = await waitForChangedRows(
+        page as PageLike,
+        currentFingerprint,
+        domain,
+      );
+      if (!nextRows) break;
+      pageRows = nextRows;
+    }
+
+    return accumulated.slice(0, limit);
   },
 });

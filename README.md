@@ -115,6 +115,7 @@ opencli plugin uninstall aitdk
 | 命令 | 插件 | 说明 |
 |------|------|------|
 | `sim backlinks` | sim | 反向链接 |
+| `sem backlinks` | sem | SEMrush 反向链接（支持自动翻页） |
 | `sim landing-pages` | sim | 自然着陆页（默认新点击量） |
 | `sim keyword-generator` | sim | 关键词生成器（phrase match，可筛 volume/CPC/难度） |
 | `sim web-ranking` | sim | 站点排名（搜索自然流量；可按变动/月访问量排序） |
@@ -371,6 +372,7 @@ https://sim.3ue.com/#/digitalsuite/acquisition/backlinks/table/999/?duration=28d
 ```bash
 opencli sim backlinks stripe.com
 opencli sim backlinks stripe.com --limit 20 -f json
+opencli sim backlinks stripe.com --limit 500 -f json
 opencli sim backlinks stripe.com --dofollow true --limit 20 -f json
 opencli sim backlinks https://www.stripe.com/pricing --limit 10 -f yaml
 ```
@@ -380,7 +382,7 @@ opencli sim backlinks https://www.stripe.com/pricing --limit 10 -f yaml
 | 参数 | 类型 | 必填 | 默认 | 说明 |
 |------|------|------|------|------|
 | `domain` | string | 是 | — | 域名或 URL，会规范化为 host |
-| `--limit` | int | 否 | `50` | 返回条数，范围 `1–100` |
+| `--limit` | int | 否 | `50` | 返回条数，范围 `1–1000`；超过单页时自动翻页 |
 | `--dofollow` | string | 否 | `all` | `true`（DoFollow）/ `false`（NoFollow）/ `all` |
 
 #### 输出列
@@ -401,6 +403,12 @@ opencli sim backlinks https://www.stripe.com/pricing --limit 10 -f yaml
 
 ```bash
 OPENCLI_BROWSER_COMMAND_TIMEOUT=180 opencli sim backlinks stripe.com --limit 10 -f json
+```
+
+`sem backlinks` 同样保留 `--limit` 接口并支持自动翻页；默认 `50`，范围 `1–1000`：
+
+```bash
+OPENCLI_BROWSER_COMMAND_TIMEOUT=180 opencli sem backlinks example.com --limit 500 -f json
 ```
 
 ---

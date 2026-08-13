@@ -118,7 +118,7 @@ export async function openSemDeepLink(
 }
 
 export const DEFAULT_BACKLINKS_LIMIT = 50;
-export const MAX_BACKLINKS_LIMIT = 100;
+export const MAX_BACKLINKS_LIMIT = 1000;
 
 export function normalizeBacklinksLimit(
   raw: unknown,

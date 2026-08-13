@@ -34,12 +34,20 @@ import {
   normalizeBacklinksLimit,
 } from './lib/backlinks-limit.js';
 import {
+  BACKLINKS_NEXT_SELECTOR,
+  appendUniqueRows,
+  backlinkIdentity,
+  parseHasNextState,
+  rowsFingerprint,
+} from './lib/backlinks-pagination.js';
+import {
   dofollowToFollowParam,
   normalizeDofollow,
 } from './lib/dofollow.js';
 
 const SITE_ORIGIN = 'https://sim.3ue.com';
 const LOAD_TIMEOUT_SEC = 90;
+const PAGE_CHANGE_TIMEOUT_SEC = 30;
 
 const COLUMNS = [
   'rank',
@@ -155,6 +163,84 @@ const EXTRACT_ROWS_JS = `(() => {
   return JSON.stringify(rows);
 })()`;
 
+const PAGINATION_STATE_JS = `(() => {
+  const next = document.querySelector(${JSON.stringify(BACKLINKS_NEXT_SELECTOR)});
+  const button = next?.matches('button, a') ? next : next?.querySelector('button, a');
+  const disabled = !next
+    || next.getAttribute('data-automation-pagination-control-disabled') === 'true'
+    || next.getAttribute('aria-disabled') === 'true'
+    || next.classList.contains('ant-pagination-disabled')
+    || !!button?.disabled;
+  return JSON.stringify({ hasNext: !disabled });
+})()`;
+
+const CLICK_NEXT_JS = `(() => {
+  const next = document.querySelector(${JSON.stringify(BACKLINKS_NEXT_SELECTOR)});
+  const button = next?.matches('button, a') ? next : next?.querySelector('button, a');
+  if (
+    !next
+    || next.getAttribute('data-automation-pagination-control-disabled') === 'true'
+    || next.getAttribute('aria-disabled') === 'true'
+    || next.classList.contains('ant-pagination-disabled')
+    || !!button?.disabled
+  ) return false;
+  (button || next).click();
+  return true;
+})()`;
+
+function parseRowsPayload(raw: unknown): BacklinkRow[] {
+  try {
+    const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    throw new CommandExecutionError('Failed to parse backlinks table payload');
+  }
+}
+
+async function extractRows(page: { evaluate: (js: string) => Promise<unknown> }): Promise<BacklinkRow[]> {
+  return parseRowsPayload(await page.evaluate(EXTRACT_ROWS_JS));
+}
+
+async function hasNextPage(page: { evaluate: (js: string) => Promise<unknown> }): Promise<boolean> {
+  try {
+    return parseHasNextState(await page.evaluate(PAGINATION_STATE_JS));
+  } catch (error) {
+    const detail = error instanceof Error ? `: ${error.message}` : '';
+    throw new CommandExecutionError(`Failed to read backlinks pagination state${detail}`);
+  }
+}
+
+async function waitForChangedRows(
+  page: {
+    evaluate: (js: string) => Promise<unknown>;
+    wait: (seconds: number) => Promise<void>;
+  },
+  previousFingerprint: string,
+  domain: string,
+): Promise<BacklinkRow[] | null> {
+  const deadline = Date.now() + PAGE_CHANGE_TIMEOUT_SEC * 1000;
+  while (Date.now() < deadline) {
+    const status = String(await page.evaluate(PAGE_STATUS_JS));
+    if (status === 'auth') {
+      throw new AuthRequiredError(
+        'sim.3ue.com',
+        'Not logged in to sim.3ue.com — open Chrome and sign in first',
+      );
+    }
+    if (status === 'error') {
+      throw new CommandExecutionError(`Backlinks pagination failed for ${domain}.`);
+    }
+    if (status === 'ready' || status === 'hydrating') {
+      const rows = await extractRows(page);
+      if (rows.length > 0 && rowsFingerprint(rows, backlinkIdentity) !== previousFingerprint) {
+        return rows;
+      }
+    }
+    await page.wait(0.25);
+  }
+  return null;
+}
+
 cli({
   site: 'sim',
   name: 'backlinks',
@@ -235,19 +321,32 @@ cli({
       throw new TimeoutError(`sim backlinks (${domain})`, LOAD_TIMEOUT_SEC);
     }
 
-    const raw = await page.evaluate(EXTRACT_ROWS_JS);
-    let rows: BacklinkRow[] = [];
-    try {
-      const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
-      rows = Array.isArray(parsed) ? parsed : [];
-    } catch {
-      throw new CommandExecutionError('Failed to parse backlinks table payload');
-    }
+    let pageRows = await extractRows(page);
 
-    if (rows.length === 0) {
+    if (pageRows.length === 0) {
       throw new EmptyResultError('sim backlinks', `No active backlinks found for ${domain}`);
     }
 
-    return rows.slice(0, limit);
+    const accumulated: BacklinkRow[] = [];
+    const seen = new Set<string>();
+    const seenPageFingerprints = new Set<string>();
+
+    for (let pageIndex = 0; pageIndex < MAX_BACKLINKS_LIMIT; pageIndex++) {
+      const currentFingerprint = rowsFingerprint(pageRows, backlinkIdentity);
+      if (seenPageFingerprints.has(currentFingerprint)) break;
+      seenPageFingerprints.add(currentFingerprint);
+
+      appendUniqueRows(accumulated, seen, pageRows, backlinkIdentity, limit);
+      if (accumulated.length >= limit || !(await hasNextPage(page))) break;
+
+      const clicked = await page.evaluate(CLICK_NEXT_JS);
+      if (!(clicked === true || clicked === 'true')) break;
+
+      const nextRows = await waitForChangedRows(page, currentFingerprint, domain);
+      if (!nextRows) break;
+      pageRows = nextRows;
+    }
+
+    return accumulated.slice(0, limit);
   },
 });

@@ -1,17 +1,21 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { normalizeBacklinksLimit } from './backlinks-limit.ts';
+import {
+  MAX_BACKLINKS_LIMIT,
+  normalizeBacklinksLimit,
+} from './backlinks-limit.ts';
 
 describe('normalizeBacklinksLimit', () => {
-  it('accepts positive integers up to 100', () => {
+  it('accepts positive integers up to 1000', () => {
     assert.equal(normalizeBacklinksLimit(1), 1);
-    assert.equal(normalizeBacklinksLimit(100), 100);
+    assert.equal(normalizeBacklinksLimit(1000), 1000);
+    assert.equal(MAX_BACKLINKS_LIMIT, 1000);
   });
 
-  it('rejects integers greater than 100', () => {
+  it('rejects integers greater than 1000', () => {
     assert.throws(
-      () => normalizeBacklinksLimit(101),
-      /limit must be <= 100/,
+      () => normalizeBacklinksLimit(1001),
+      /limit must be <= 1000/,
     );
   });
 

@@ -58,7 +58,8 @@ describe('normalizeBacklinksLimit', () => {
   });
 
   it('rejects over max', () => {
-    assert.throws(() => normalizeBacklinksLimit(101), /limit must be <= 100/);
+    assert.equal(normalizeBacklinksLimit(1000), 1000);
+    assert.throws(() => normalizeBacklinksLimit(1001), /limit must be <= 1000/);
   });
 });
 
