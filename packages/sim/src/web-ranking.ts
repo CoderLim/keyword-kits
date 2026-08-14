@@ -213,8 +213,12 @@ const APPLY_SORT_CLICK_JS = (sort: WebRankingSort) => `(() => {
   return 'clicked';
 })()`;
 
-async function assertPageReady(page: PageLike, label: string): Promise<void> {
-  const status = await waitForPageStatus(page, PAGE_STATUS_JS, LOAD_TIMEOUT_SEC);
+async function assertPageReady(
+  page: PageLike,
+  label: string,
+  opts: { reloadIfStuck?: boolean } = {},
+): Promise<void> {
+  const status = await waitForPageStatus(page, PAGE_STATUS_JS, LOAD_TIMEOUT_SEC, opts);
   if (status === 'auth') {
     throw new AuthRequiredError(
       'sim.3ue.com',
@@ -323,7 +327,7 @@ cli({
     const url = buildWebRankingUrl({ industryId, sort });
 
     await openDeepLink(page, url);
-    await assertPageReady(page, 'sim web-ranking');
+    await assertPageReady(page, 'sim web-ranking', { reloadIfStuck: true });
 
     await ensureOrganic(page);
     await ensureSort(page, sort);

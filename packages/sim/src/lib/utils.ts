@@ -67,11 +67,13 @@ export async function waitForPageStatus(
   page: PageLike,
   statusJs: string,
   timeoutSec: number,
-  opts: { onError?: () => Promise<void> } = {},
+  opts: { onError?: () => Promise<void>; reloadIfStuck?: boolean } = {},
 ): Promise<string> {
   let status = 'loading';
   let refreshed = false;
+  let reloaded = false;
   let hydratingSince = 0;
+  let loadingSince = 0;
   const deadline = Date.now() + timeoutSec * 1000;
 
   while (Date.now() < deadline) {
@@ -81,6 +83,17 @@ export async function waitForPageStatus(
     if (status === 'hydrating') {
       if (!hydratingSince) hydratingSince = Date.now();
       if (Date.now() - hydratingSince > 3000) return 'ready';
+    } else {
+      hydratingSince = 0;
+    }
+
+    if (status === 'loading' && opts.reloadIfStuck && !reloaded) {
+      if (!loadingSince) loadingSince = Date.now();
+      if (Date.now() - loadingSince > 3000) {
+        reloaded = true;
+        await page.evaluate('location.reload()');
+        loadingSince = 0;
+      }
     }
 
     if (status === 'error' && !refreshed) {
@@ -91,7 +104,8 @@ export async function waitForPageStatus(
         await page.evaluate(`(() => {
           const btn = [...document.querySelectorAll('button')]
             .find((b) => /刷新|Refresh|Retry/i.test(b.textContent || ''));
-          btn?.click();
+          if (btn) btn.click();
+          else location.reload();
         })()`);
       }
     }
