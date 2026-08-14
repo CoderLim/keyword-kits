@@ -1,6 +1,6 @@
-# Google Ads 关键词搜索量工具
+# Google Ads 关键词工具
 
-通过 Google Ads API 获取关键词历史搜索指标，输出终端表格与 CSV。
+通过 Google Ads API 获取关键词历史搜索指标，以及从 seed 词/URL/站点生成衍生关键词。输出终端表格与 CSV。
 
 完整技术方案见 **[docs/TECH.md](docs/TECH.md)**（架构、API 字段、账号、认证、排错）。
 
@@ -79,6 +79,29 @@ rows = fetch_keyword_metrics(client, "1265134925", ["gpts"], "1000", geo_target_
 # rows[0]["monthly_search_volumes"] 为 list[dict]
 ```
 
+### 关键词规划（拓词）
+
+输入 seed 词，返回衍生关键词 + 搜索量 / 竞争度 / CPC（`GenerateKeywordIdeas`）：
+
+```bash
+python keyword_ideas.py \
+  --login-customer-id 1265134925 \
+  --customer-id 1265134925 \
+  --language-id 1000 \
+  --limit 50 \
+  --json \
+  "image to text converter"
+```
+
+URL / 整站 seed：
+
+```bash
+python keyword_ideas.py ... --url https://example.com/ocr
+python keyword_ideas.py ... --site www.example.com
+```
+
+`--url` 可与关键词同时使用（KeywordAndUrlSeed）。`--site` 不能与关键词或 `--url` 混用。`--geo-target-id` 不传 = worldwide。
+
 ## CLI 参数
 
 | 参数 | 说明 | 默认 |
@@ -91,6 +114,15 @@ rows = fetch_keyword_metrics(client, "1265134925", ["gpts"], "1000", geo_target_
 | `--language-id` | 语言 ID | `1017`（简体中文） |
 | `--json` | 输出 JSON 到 stdout（脚本/API 用） | 否 |
 | `--csv` | CSV 文件路径 | 无（可选） |
+
+`keyword_ideas.py` 额外参数：
+
+| 参数 | 说明 | 默认 |
+|------|------|------|
+| `keywords` | seed 关键词 | 与 `--url` / `--site` 至少其一 |
+| `--url` | 页面 URL seed | 无 |
+| `--site` | 整站域名 seed | 无 |
+| `--limit` | 返回条数上限 | `50`（最大 1000） |
 
 ## CSV 输出列
 
@@ -107,7 +139,8 @@ python3 -m unittest discover -s tests -v
 ```
 packages/google-ads/
 ├── docs/TECH.md              # 技术方案（主文档）
-├── keyword_volume.py         # 主 CLI / Python API
+├── keyword_volume.py         # 搜索量 CLI / Python API
+├── keyword_ideas.py          # 拓词 CLI / Python API
 ├── generate_refresh_token.py # OAuth 授权
 ├── run_example.sh            # 示例脚本
 ├── tests/

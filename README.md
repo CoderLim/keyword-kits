@@ -11,7 +11,7 @@
 | [`packages/namecheap`](packages/namecheap) | Namecheap 域名 Custom DNS nameserver 设置，需已登录 Chrome |
 | [`packages/sem`](packages/sem) | SEMrush（`sem.3ue.com`）域名查询与反向链接，需已登录 Chrome |
 | [`packages/aitdk`](packages/aitdk) | AITDK 域名 SEO 数据快照（whois + 流量），`aitdk get-data`，PUBLIC，无需 Chrome |
-| [`packages/google-ads`](packages/google-ads) | Google Ads API 关键词历史指标（Python CLI，`GenerateKeywordHistoricalMetrics`） |
+| [`packages/google-ads`](packages/google-ads) | Google Ads API 关键词历史指标与拓词（Python CLI：`GenerateKeywordHistoricalMetrics` / `GenerateKeywordIdeas`） |
 
 仓库：https://github.com/CoderLim/keyword-kits
 

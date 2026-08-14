@@ -1,30 +1,34 @@
-# Google Ads 关键词搜索量工具 — 技术方案
+# Google Ads 关键词工具 — 技术方案
 
 ## 1. 目标
 
-通过 Google Ads API 的 `KeywordPlanIdeaService.GenerateKeywordHistoricalMetrics`，输入一个或多个关键词，获取历史搜索指标（月均搜索量、竞争程度、CPC、逐月趋势等）。输出方式可选：Python 数据结构、JSON（`--json`）、终端表格、CSV（`--csv`）。
+1. `GenerateKeywordHistoricalMetrics`：输入已知关键词，获取历史搜索指标。
+2. `GenerateKeywordIdeas`：输入 seed 词 / URL / 站点，返回衍生关键词及同样的历史指标。
+
+输出方式可选：Python 数据结构、JSON（`--json`）、终端表格、CSV（`--csv`）。
 
 ## 2. 架构
 
 ```mermaid
 flowchart LR
-  CLI[keyword_volume.py CLI] --> Auth[google-ads.yaml + OAuth refresh token]
+  VolumeCLI[keyword_volume.py] --> Auth[google-ads.yaml + OAuth]
+  IdeasCLI[keyword_ideas.py] --> Auth
   Auth --> Client[GoogleAdsClient]
   Client --> KPI[KeywordPlanIdeaService]
-  KPI --> API[GenerateKeywordHistoricalMetrics]
-  API --> Parse[parse_metric_result]
-  Parse --> Table[终端表格]
-  Parse --> CSV[CSV 文件]
+  KPI --> Metrics[GenerateKeywordHistoricalMetrics]
+  KPI --> Ideas[GenerateKeywordIdeas]
 ```
 
 ### 模块职责
 
 | 文件 | 职责 |
 |------|------|
-| `keyword_volume.py` | CLI、API 请求、字段解析、表格/CSV 输出 |
+| `keyword_volume.py` | 搜索量 CLI、字段解析、表格/CSV、共享认证 helper |
+| `keyword_ideas.py` | 拓词 CLI；复用 volume 的解析与输出 |
 | `generate_refresh_token.py` | Desktop OAuth 授权，生成 `google-ads.yaml` |
 | `run_example.sh` | 一键跑中英文示例关键词 |
-| `tests/test_keyword_volume.py` | 单元测试（解析、CSV、请求构建） |
+| `tests/test_keyword_volume.py` | 搜索量单元测试 |
+| `tests/test_keyword_ideas.py` | 拓词单元测试 |
 
 ## 3. API 设计
 
@@ -97,6 +101,22 @@ monthly_search_volumes
 ```
 
 结果按 `average_monthly_searches` 降序排列。
+
+### 3.5 拓词接口
+
+```
+KeywordPlanIdeaService.GenerateKeywordIdeas
+```
+
+| 参数 | 脚本对应 | 默认 | 说明 |
+|------|----------|------|------|
+| `keyword_seed` / `url_seed` / `keyword_and_url_seed` / `site_seed` | 位置参数 / `--url` / `--site` | 至少其一 | 四选一；关键词+URL 走 KeywordAndUrlSeed |
+| `geo_target_constants[]` | `--geo-target-id` | 不传 = worldwide | 与搜索量工具相同 |
+| `language` | `--language-id` | `1017` | 与搜索量工具相同 |
+| `page_size` | `--limit` | `50`（最大 1000） | 取前 N 条后停止分页 |
+| `include_adult_keywords` | 固定 `false` | — | 不含成人词 |
+
+每条 `GenerateKeywordIdeaResult` 的 `keyword_idea_metrics` / `close_variants` 映射到与搜索量工具相同的输出列。
 
 ## 4. 认证与账号
 

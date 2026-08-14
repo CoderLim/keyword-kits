@@ -25,3 +25,12 @@ python keyword_volume.py \
   --language-id 1000 \
   --json \
   "google ads"
+
+python keyword_ideas.py \
+  --config google-ads.yaml \
+  --login-customer-id "${TEST_CUSTOMER_ID}" \
+  --customer-id "${TEST_CUSTOMER_ID}" \
+  --language-id 1000 \
+  --limit 5 \
+  --json \
+  "google ads"
