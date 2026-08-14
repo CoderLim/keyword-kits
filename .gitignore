@@ -23,3 +23,11 @@ packages/sem/backlinks.js
 packages/aitdk/get-data.js
 packages/steamdb/new-trending-lib.js
 packages/steamdb/new-trending.js
+
+# google-ads (Python)
+packages/google-ads/.venv/
+packages/google-ads/__pycache__/
+packages/google-ads/*.pyc
+packages/google-ads/.env
+packages/google-ads/google-ads.yaml
+packages/google-ads/*.csv

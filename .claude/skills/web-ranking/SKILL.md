@@ -40,7 +40,7 @@ OPENCLI_BROWSER_COMMAND_TIMEOUT=180 node "<skill-directory>/scripts/web-ranking.
 
 脚本会：
 
-1. `opencli sim web-ranking --industry <id> --limit 100 -f json`（固定搜索+自然、1m、按变动排序）
+1. `opencli sim web-ranking --industry <id> --limit 100 -f json`（固定搜索+自然、1m、按变动排序；可用 `--limit` 拉更多，CLI 上限 1000）
 2. 对全部域名调用 `scripts/whois.mjs`（`whois.freeaiapi.xyz`，每批 3 个、间隔 800ms）
 3. 有创建时间的按时间倒序，输出前 20
 

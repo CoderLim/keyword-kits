@@ -80,8 +80,8 @@ function parseArgs(argv) {
     }
     throw new Error(`unknown arg: ${arg}`);
   }
-  if (!Number.isInteger(options.limit) || options.limit < 1 || options.limit > 100) {
-    throw new Error('--limit must be an integer 1-100');
+  if (!Number.isInteger(options.limit) || options.limit < 1 || options.limit > 1000) {
+    throw new Error('--limit must be an integer 1-1000');
   }
   if (!Number.isInteger(options.top) || options.top < 1) {
     throw new Error('--top must be a positive integer');

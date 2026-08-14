@@ -19,7 +19,18 @@ import {
   TimeoutError,
 } from '@jackwener/opencli/errors';
 import { cli, Strategy } from '@jackwener/opencli/registry';
+import {
+  appendUniqueRows,
+  parseHasNextState,
+  rowsFingerprint,
+} from './lib/backlinks-pagination.js';
 import { resolveIndustryId } from './lib/web-ranking-industry.js';
+import {
+  DEFAULT_WEB_RANKING_LIMIT,
+  MAX_WEB_RANKING_LIMIT,
+  normalizeWebRankingLimit,
+  rankingIdentity,
+} from './lib/web-ranking-limit.js';
 import {
   buildWebRankingUrl,
   normalizeSort,
@@ -27,15 +38,15 @@ import {
   type WebRankingSort,
 } from './lib/web-ranking-url.js';
 import {
-  DEFAULT_LIMIT,
   LOAD_TIMEOUT_SEC,
-  MAX_LIMIT,
-  normalizeLimit,
   openDeepLink,
   parseJsonRows,
   waitForPageStatus,
   type PageLike,
 } from './lib/utils.js';
+
+const MAX_PAGES = 20;
+const PAGE_CHANGE_TIMEOUT_SEC = 30;
 
 const COLUMNS = [
   'rank',
@@ -75,7 +86,7 @@ const PAGE_STATUS_JS = `(() => {
   return 'loading';
 })()`;
 
-const EXTRACT_ROWS_JS = `(() => {
+const EXTRACT_ROWS_JS = (fallbackIndustry: string) => `(() => {
   const table = document.querySelector('.swReactTable-wrapper');
   if (!table) return JSON.stringify([]);
 
@@ -102,19 +113,21 @@ const EXTRACT_ROWS_JS = `(() => {
   const categoryCol = byKey.Category;
   const visitsCol = byKey.AvgMonthVisits;
   const adsenseCol = byKey.HasAdsense;
-  if (!rankCol || !domainCol || !shareCol || !changeCol || !categoryCol || !visitsCol || !adsenseCol) {
+  if (!rankCol || !domainCol || !shareCol || !changeCol || !visitsCol) {
     return JSON.stringify([]);
   }
 
-  const rowCount = Math.min(
+  const lengths = [
     rankCol.length,
     domainCol.length,
     shareCol.length,
     changeCol.length,
-    categoryCol.length,
     visitsCol.length,
-    adsenseCol.length,
-  );
+  ];
+  if (categoryCol) lengths.push(categoryCol.length);
+  if (adsenseCol) lengths.push(adsenseCol.length);
+  const rowCount = Math.min(...lengths);
+  const fallbackIndustry = ${JSON.stringify(fallbackIndustry)};
 
   const rows = [];
   for (let r = 0; r < rowCount; r++) {
@@ -134,9 +147,10 @@ const EXTRACT_ROWS_JS = `(() => {
       if (!change.startsWith('-')) change = '-' + change;
     }
 
-    const industry =
-      (categoryCol[r].querySelector('.change-color-on-hover')?.innerText || '').trim() ||
-      (categoryCol[r].innerText || '').trim().split('\\n')[0].trim();
+    const industry = categoryCol
+      ? (categoryCol[r].querySelector('.change-color-on-hover')?.innerText || '').trim() ||
+        (categoryCol[r].innerText || '').trim().split('\\n')[0].trim()
+      : fallbackIndustry;
 
     rows.push({
       rank,
@@ -145,7 +159,7 @@ const EXTRACT_ROWS_JS = `(() => {
       change,
       industry,
       monthlyVisits: (visitsCol[r].innerText || '').trim(),
-      adsense: !!adsenseCol[r].querySelector('.sw-icon-checkmark_circle'),
+      adsense: adsenseCol ? !!adsenseCol[r].querySelector('.sw-icon-checkmark_circle') : false,
     });
   }
   return JSON.stringify(rows);
@@ -211,6 +225,21 @@ const APPLY_SORT_CLICK_JS = (sort: WebRankingSort) => `(() => {
   }
   header.click();
   return 'clicked';
+})()`;
+
+const PAGINATION_STATE_JS = `(() => {
+  const next = document.querySelector('[data-automation-pagination-control="control-right"]');
+  const hasNext = !!next && next.getAttribute('data-automation-pagination-control-disabled') !== 'true';
+  return JSON.stringify({ hasNext });
+})()`;
+
+const CLICK_NEXT_JS = `(() => {
+  const next = document.querySelector('[data-automation-pagination-control="control-right"]');
+  if (!next || next.getAttribute('data-automation-pagination-control-disabled') === 'true') {
+    return false;
+  }
+  next.click();
+  return true;
 })()`;
 
 async function assertPageReady(
@@ -290,12 +319,64 @@ async function ensureSort(page: PageLike, sort: WebRankingSort): Promise<void> {
   }
 }
 
+async function extractRows(
+  page: PageLike,
+  fallbackIndustry = '',
+): Promise<WebRankingRow[]> {
+  return parseJsonRows<WebRankingRow>(
+    await page.evaluate(EXTRACT_ROWS_JS(fallbackIndustry)),
+    'web-ranking',
+  );
+}
+
+async function hasNextPage(page: PageLike): Promise<boolean> {
+  try {
+    return parseHasNextState(await page.evaluate(PAGINATION_STATE_JS));
+  } catch (error) {
+    const detail = error instanceof Error ? `: ${error.message}` : '';
+    throw new CommandExecutionError(`Failed to read web-ranking pagination state${detail}`);
+  }
+}
+
+async function waitForChangedRows(
+  page: PageLike,
+  previousFingerprint: string,
+  industryId: string,
+): Promise<WebRankingRow[] | null> {
+  const deadline = Date.now() + PAGE_CHANGE_TIMEOUT_SEC * 1000;
+  while (Date.now() < deadline) {
+    const status = String(await page.evaluate(PAGE_STATUS_JS));
+    if (status === 'auth') {
+      throw new AuthRequiredError(
+        'sim.3ue.com',
+        'Not logged in to sim.3ue.com — open Chrome and sign in first',
+      );
+    }
+    if (status === 'error') {
+      throw new CommandExecutionError(
+        `Web ranking pagination failed for industry=${industryId}.`,
+      );
+    }
+    if (status === 'ready' || status === 'hydrating') {
+      const rows = await extractRows(page, industryId);
+      if (
+        rows.length > 0
+        && rowsFingerprint(rows, rankingIdentity) !== previousFingerprint
+      ) {
+        return rows;
+      }
+    }
+    await page.wait(0.25);
+  }
+  return null;
+}
+
 cli({
   site: 'sim',
   name: 'web-ranking',
   access: 'read',
   description:
-    '查看站点排名（Category Leaders 搜索自然流量；默认按变动降序，固定 1m）',
+    '查看站点排名（Category Leaders 搜索自然流量；默认按变动降序，固定 1m；支持自动翻页）',
   domain: 'sim.3ue.com',
   strategy: Strategy.UI,
   browser: true,
@@ -315,15 +396,15 @@ cli({
     {
       name: 'limit',
       type: 'int',
-      default: DEFAULT_LIMIT,
-      help: `返回条数（1-${MAX_LIMIT}，默认 ${DEFAULT_LIMIT}）`,
+      default: DEFAULT_WEB_RANKING_LIMIT,
+      help: `返回条数（1-${MAX_WEB_RANKING_LIMIT}，默认 ${DEFAULT_WEB_RANKING_LIMIT}；超出当前页自动翻页）`,
     },
   ],
   columns: [...COLUMNS],
   func: async (page, kwargs) => {
     const sort = normalizeSort(kwargs.sort);
     const industryId = resolveIndustryId(kwargs.industry);
-    const limit = normalizeLimit(kwargs.limit, DEFAULT_LIMIT);
+    const limit = normalizeWebRankingLimit(kwargs.limit);
     const url = buildWebRankingUrl({ industryId, sort });
 
     await openDeepLink(page, url);
@@ -332,18 +413,30 @@ cli({
     await ensureOrganic(page);
     await ensureSort(page, sort);
 
-    const rows = parseJsonRows<WebRankingRow>(
-      await page.evaluate(EXTRACT_ROWS_JS),
-      'web-ranking',
-    );
-
-    if (rows.length === 0) {
+    let pageRows = await extractRows(page, industryId);
+    if (pageRows.length === 0) {
       throw new EmptyResultError(
         'sim web-ranking',
         `No ranking rows for industry=${industryId} sort=${sort}`,
       );
     }
 
-    return rows.slice(0, limit);
+    const accumulated: WebRankingRow[] = [];
+    const seen = new Set<string>();
+
+    for (let pageIndex = 0; pageIndex < MAX_PAGES; pageIndex++) {
+      const fingerprint = rowsFingerprint(pageRows, rankingIdentity);
+      appendUniqueRows(accumulated, seen, pageRows, rankingIdentity, limit);
+      if (accumulated.length >= limit || !(await hasNextPage(page))) break;
+
+      const clicked = await page.evaluate(CLICK_NEXT_JS);
+      if (!(clicked === true || clicked === 'true')) break;
+
+      const nextRows = await waitForChangedRows(page, fingerprint, industryId);
+      if (!nextRows) break;
+      pageRows = nextRows;
+    }
+
+    return accumulated.slice(0, limit);
   },
 });

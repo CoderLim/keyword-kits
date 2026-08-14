@@ -1,0 +1,6 @@
+developer_token: "<from Google Ads API Center>"
+client_id: "<from OAuth client JSON>"
+client_secret: "<from OAuth client JSON>"
+refresh_token: "<from generate_refresh_token.py>"
+login_customer_id: "2748189611"  # Test Account Access 下查询时用 CLI: --login-customer-id 1265134925
+use_proto_plus: true

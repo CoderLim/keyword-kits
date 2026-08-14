@@ -11,6 +11,7 @@
 | [`packages/namecheap`](packages/namecheap) | Namecheap 域名 Custom DNS nameserver 设置，需已登录 Chrome |
 | [`packages/sem`](packages/sem) | SEMrush（`sem.3ue.com`）域名查询与反向链接，需已登录 Chrome |
 | [`packages/aitdk`](packages/aitdk) | AITDK 域名 SEO 数据快照（whois + 流量），`aitdk get-data`，PUBLIC，无需 Chrome |
+| [`packages/google-ads`](packages/google-ads) | Google Ads API 关键词历史指标（Python CLI，`GenerateKeywordHistoricalMetrics`） |
 
 仓库：https://github.com/CoderLim/keyword-kits
 
@@ -118,7 +119,7 @@ opencli plugin uninstall aitdk
 | `sem backlinks` | sem | SEMrush 反向链接（支持自动翻页） |
 | `sim landing-pages` | sim | 自然着陆页（默认新点击量） |
 | `sim keyword-generator` | sim | 关键词生成器（phrase match，可筛 volume/CPC/难度） |
-| `sim web-ranking` | sim | 站点排名（搜索自然流量；可按变动/月访问量排序） |
+| `sim web-ranking` | sim | 站点排名（搜索自然流量；可按变动/月访问量排序；支持自动翻页） |
 | `google-trends now` | google-trends | Trending Now（支持 geo / status / hours） |
 | `google-trends explore` | google-trends | Explore：兴趣曲线 + 相关搜索（最多 5 词） |
 | `queryDomain search` | query-domain | 关键词相关域名列表（固定 14 TLD） |
@@ -506,7 +507,7 @@ OPENCLI_BROWSER_COMMAND_TIMEOUT=180 opencli sim keyword-generator dice --limit 1
 
 ## `sim web-ranking`
 
-查看 Category Leaders **搜索自然流量**站点排名。固定筛选：Organic（自然）、时长 `1m`、全球、`webSource=Total`。
+查看 Category Leaders **搜索自然流量**站点排名。固定筛选：Organic（自然）、时长 `1m`、全球、`webSource=Total`。当前页不够时自动点下一页，直到凑满 `--limit`（上限 1000）。
 
 **固定默认筛选（一期不暴露为参数）：**
 
@@ -539,7 +540,7 @@ OPENCLI_BROWSER_COMMAND_TIMEOUT=180 opencli sim web-ranking --industry All --sor
 |------|------|------|------|------|
 | `--sort` | string | 否 | `change` | `change`（变动降序）/ `visits`（每月访问量降序） |
 | `--industry` | string | 否 | `All` | 行业：`All` 或已映射行业名 |
-| `--limit` | int | 否 | `50` | 返回条数，范围 `1–100` |
+| `--limit` | int | 否 | `50` | 返回条数，范围 `1–1000`；超出当前页自动翻页 |
 
 #### 输出列
 

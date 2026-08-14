@@ -1,5 +1,5 @@
 ---
-description: Skill source of truth lives under .claude/skills; .cursor/skills are symlinks only
+description: Skill source of truth lives under .claude/skills; symlink into .cursor/skills and ~/.claude/skills
 alwaysApply: true
 ---
 
@@ -7,15 +7,25 @@ alwaysApply: true
 
 - **Source of truth**: put all skill source under `.claude/skills/<skill-name>/`
 - **Cursor discovery**: `.cursor/skills/<skill-name>` must be a **symlink** to `../../.claude/skills/<skill-name>`
+- **Global Claude Code**: `~/.claude/skills/<skill-name>` must be a **symlink** to `$(repo-root)/.claude/skills/<skill-name>` (absolute path)
 - Do **not** keep a second copy of skill files under `.cursor/skills/`
-- New / moved skills: write in `.claude/skills/`, then add the `.cursor/skills/` symlink
+- **New / moved skills**: write in `.claude/skills/`, then add **both** symlinks below
+
+```bash
+# From repo root
+SKILL=my-skill
+ln -sf ../../.claude/skills/$SKILL .cursor/skills/$SKILL
+ln -sf "$(pwd)/.claude/skills/$SKILL" ~/.claude/skills/$SKILL
+```
 
 ```bash
 # ✅ GOOD
 .claude/skills/my-skill/SKILL.md
 .cursor/skills/my-skill -> ../../.claude/skills/my-skill
+~/.claude/skills/my-skill -> /path/to/keyword-kits/.claude/skills/my-skill
 
 # ❌ BAD
 .cursor/skills/my-skill/SKILL.md   # real copy
 .claude/skills/my-skill -> ../../.cursor/skills/my-skill  # reverse symlink
+# missing ~/.claude/skills/my-skill  # skill not globally available
 ```
