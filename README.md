@@ -676,7 +676,7 @@ keyword-kits/
 │   │   ├── src/get-data.ts
 │   │   └── get-data.js          # build 产物
 ├── scripts/
-├── .cursor/skills/
+├── .claude/skills/
 ├── README.md
 └── docs/
 ```
@@ -710,7 +710,7 @@ keyword-kits/
 
 ### `subdomain-keywords`
 
-路径：[`.cursor/skills/subdomain-keywords/SKILL.md`](.cursor/skills/subdomain-keywords/SKILL.md)
+路径：[`.claude/skills/subdomain-keywords/SKILL.md`](.claude/skills/subdomain-keywords/SKILL.md)
 
 从托管子域名平台批量发现「新点击」英文关键词，并生成 Google Trends 对比链接。依赖已安装的 **sim** 插件。
 
@@ -721,7 +721,7 @@ OPENCLI_BROWSER_COMMAND_TIMEOUT=180 npm run subdomain-keywords -- --json
 
 ### `trendsnow-keywords`
 
-路径：[`.cursor/skills/trendsnow-keywords/SKILL.md`](.cursor/skills/trendsnow-keywords/SKILL.md)
+路径：[`.claude/skills/trendsnow-keywords/SKILL.md`](.claude/skills/trendsnow-keywords/SKILL.md)
 
 通过 `opencli google-trends now` 拉取近期热搜，逐词判断哪些适合做成**工具站 / 游戏站**等网站，并给出中文翻译。**不要强行把关键词解读成符合预期的需求**；无可做的词就如实说明。依赖已安装的 **google-trends** 子插件。
 

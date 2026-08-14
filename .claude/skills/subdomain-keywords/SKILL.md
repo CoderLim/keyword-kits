@@ -34,6 +34,7 @@ description: >-
 - `onrender.com`
 - `workers.dev`
 - `neocities.org`
+- `carrd.co`
 
 ## 执行步骤
 

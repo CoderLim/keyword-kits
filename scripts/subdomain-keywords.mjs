@@ -25,6 +25,7 @@ const DOMAINS = [
   'onrender.com',
   'workers.dev',
   'neocities.org',
+  'carrd.co',
 ];
 
 const LIMIT = 10;

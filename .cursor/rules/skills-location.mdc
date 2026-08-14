@@ -1,0 +1,21 @@
+---
+description: Skill source of truth lives under .claude/skills; .cursor/skills are symlinks only
+alwaysApply: true
+---
+
+# Skills location
+
+- **Source of truth**: put all skill source under `.claude/skills/<skill-name>/`
+- **Cursor discovery**: `.cursor/skills/<skill-name>` must be a **symlink** to `../../.claude/skills/<skill-name>`
+- Do **not** keep a second copy of skill files under `.cursor/skills/`
+- New / moved skills: write in `.claude/skills/`, then add the `.cursor/skills/` symlink
+
+```bash
+# ✅ GOOD
+.claude/skills/my-skill/SKILL.md
+.cursor/skills/my-skill -> ../../.claude/skills/my-skill
+
+# ❌ BAD
+.cursor/skills/my-skill/SKILL.md   # real copy
+.claude/skills/my-skill -> ../../.cursor/skills/my-skill  # reverse symlink
+```
