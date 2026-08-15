@@ -1,0 +1,6 @@
+{
+  "name": "google-suggest",
+  "version": "0.1.0",
+  "description": "Google Suggest for opencli: overrides google suggest with --move-cursor sweep",
+  "opencli": ">=1.8.6"
+}

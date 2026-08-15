@@ -1,0 +1,17 @@
+{
+  "name": "opencli-plugin-google-suggest",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "opencli plugin: Google Suggest with optional --move-cursor sweep (overrides google suggest)",
+  "license": "MIT",
+  "peerDependencies": {
+    "@jackwener/opencli": ">=1.8.6"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.1"
+  },
+  "scripts": {
+    "build": "npx esbuild src/suggest-lib.ts --outfile=suggest-lib.js --format=esm --platform=node && npx esbuild src/suggest.ts --bundle --outfile=suggest.js --format=esm --platform=node --packages=external",
+    "test": "npm run build && node --test suggest-lib.test.mjs"
+  }
+}

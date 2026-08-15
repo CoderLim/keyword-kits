@@ -11,6 +11,8 @@ packages/sim/web-ranking.js
 packages/google-trends/now.js
 packages/google-trends/explore.js
 packages/google-trends/explore-lib.js
+packages/google-suggest/suggest.js
+packages/google-suggest/suggest-lib.js
 packages/query-domain/lib.js
 packages/query-domain/search.js
 packages/ahrefs/lib.js

@@ -1,4 +1,4 @@
-# opencli plugins (sim + google-trends + query-domain + ahrefs + namecheap + sem + aitdk)
+# opencli plugins (sim + google-trends + google-suggest + query-domain + ahrefs + namecheap + sem + aitdk)
 
 基于 [opencli](https://github.com/jackwener/OpenCLI) 的插件 monorepo：
 
@@ -6,6 +6,7 @@
 |--------|------|
 | [`packages/sim`](packages/sim) | SimilarWeb（`sim.3ue.com`），需已登录 Chrome |
 | [`packages/google-trends`](packages/google-trends) | Google Trends：`google-trends now` + `google-trends explore`（PUBLIC，无需浏览器） |
+| [`packages/google-suggest`](packages/google-suggest) | 覆盖内置 `google suggest`，支持 `--move-cursor` 多光标补全（PUBLIC） |
 | [`packages/query-domain`](packages/query-domain) | query.domains 关键词域名列表，`queryDomain search`，PUBLIC，无需 Chrome |
 | [`packages/ahrefs`](packages/ahrefs) | Ahrefs 免费 KD + Backlink Checker（DR + 外链），尽量免登录；需 Chrome Bridge（Strategy.UI） |
 | [`packages/namecheap`](packages/namecheap) | Namecheap 域名 Custom DNS nameserver 设置，需已登录 Chrome |
@@ -41,7 +42,7 @@ opencli doctor   # 需显示 Everything looks good
 
 **ahrefs** 只需 Chrome Bridge，**不需要** Ahrefs 账号登录。
 
-**google-trends**、**query-domain** 与 **aitdk** 不需要 Chrome。
+**google-trends**、**google-suggest**、**query-domain** 与 **aitdk** 不需要 Chrome。
 
 ---
 
@@ -55,6 +56,7 @@ npm run build
 # monorepo 本地安装需指向子插件目录：
 opencli plugin install file://$(pwd)/packages/sim
 opencli plugin install file://$(pwd)/packages/google-trends
+opencli plugin install file://$(pwd)/packages/google-suggest
 opencli plugin install file://$(pwd)/packages/query-domain
 opencli plugin install file://$(pwd)/packages/ahrefs
 opencli plugin install file://$(pwd)/packages/namecheap
@@ -69,6 +71,7 @@ opencli plugin install github:CoderLim/keyword-kits
 # 或只装其中一个：
 opencli plugin install github:CoderLim/keyword-kits/sim
 opencli plugin install github:CoderLim/keyword-kits/google-trends
+opencli plugin install github:CoderLim/keyword-kits/google-suggest
 opencli plugin install github:CoderLim/keyword-kits/query-domain
 opencli plugin install github:CoderLim/keyword-kits/ahrefs
 opencli plugin install github:CoderLim/keyword-kits/namecheap
@@ -83,6 +86,7 @@ opencli plugin list
 opencli sim --help
 opencli google-trends now --help
 opencli google-trends explore --help
+opencli google suggest --help
 opencli queryDomain --help
 opencli ahrefs kd --help
 opencli ahrefs backlinks --help
@@ -95,6 +99,7 @@ opencli aitdk get-data --help
 ```bash
 opencli plugin update sim
 opencli plugin update google-trends
+opencli plugin update google-suggest
 opencli plugin update query-domain
 opencli plugin update ahrefs
 opencli plugin update namecheap
@@ -102,6 +107,7 @@ opencli plugin update sem
 opencli plugin update aitdk
 opencli plugin uninstall sim
 opencli plugin uninstall google-trends
+opencli plugin uninstall google-suggest
 opencli plugin uninstall query-domain
 opencli plugin uninstall ahrefs
 opencli plugin uninstall namecheap
@@ -122,6 +128,7 @@ opencli plugin uninstall aitdk
 | `sim web-ranking` | sim | 站点排名（搜索自然流量；可按变动/月访问量排序；支持自动翻页） |
 | `google-trends now` | google-trends | Trending Now（支持 geo / status / hours） |
 | `google-trends explore` | google-trends | Explore：兴趣曲线 + 相关搜索（最多 5 词） |
+| `google suggest` | google-suggest | 覆盖内置 Suggest；`--move-cursor` 扫开头/词后/结尾 |
 | `queryDomain search` | query-domain | 关键词相关域名列表（固定 14 TLD） |
 | `ahrefs kd` | ahrefs | 免费 Keyword Difficulty |
 | `ahrefs backlinks` | ahrefs | 免费 Backlink Checker（DR + 外链） |
@@ -129,6 +136,29 @@ opencli plugin uninstall aitdk
 | `aitdk get-data` | aitdk | 域名 SEO 数据快照（whois + 流量，无需 Chrome） |
 
 官方内置 `google trends`（RSS 日报热搜）仍可用，与本仓库的 `google-trends now` / `explore` 互不覆盖。
+
+安装 **google-suggest** 后会覆盖内置 `google suggest`（opencli 插件后加载，可覆盖 built-in）。`google news` / `search` / `trends` 不受影响。
+
+---
+
+## `google suggest`
+
+拉取 [Google Suggest](https://suggestqueries.google.com/complete/search?client=firefox)（非官方公开补全接口）。默认句末续写；`--move-cursor` 在开头、每个单词后、结尾各请求一次。
+
+```bash
+opencli google suggest "anime expedition" --lang en -f json
+opencli google suggest "anime expedition codes" --lang en --move-cursor -f json
+```
+
+| 参数 | 类型 | 默认 | 说明 |
+|------|------|------|------|
+| `keyword` | string | 必填 | 查询词 |
+| `--lang` | string | `zh-CN` | 语言码（`hl`） |
+| `--move-cursor` | bool | `false` | 多光标扫补全；输出含 `cp` / `cursor` |
+
+输出列：`suggestion`、`cp`、`cursor`（默认模式下 `cp` 为空、`cursor=end`）
+
+`cp` 为查询串上的 0-based 字符下标（JS UTF-16），与搜索框光标一致。
 
 ---
 
