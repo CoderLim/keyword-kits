@@ -47,7 +47,7 @@ KeywordPlanIdeaService.GenerateKeywordHistoricalMetrics
 | `customer_id` | `--customer-id` | 必填 | API 操作客户 ID |
 | `keywords[]` |  positional args | 必填 | 关键词列表 |
 | `geo_target_constants[]` | `--geo-target-id`（可重复） | 不传 | 地域常量；**不传 = worldwide**（2156=中国，2840=美国） |
-| `language` | `--language-id` | `1017` | 语言常量（1017=简体中文，1000=英语） |
+| `language` | `--language-id` | 不传 | 语言常量；**不传 = 不限语言**（1017=简体中文，1000=英语） |
 | `keyword_plan_network` | 固定 | `GOOGLE_SEARCH` | 仅 Google 搜索网络 |
 | `historical_metrics_options.include_average_cpc` | 固定 `true` | — | 请求返回平均 CPC |
 

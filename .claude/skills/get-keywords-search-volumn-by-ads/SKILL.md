@@ -2,14 +2,22 @@
 name: get-keywords-search-volumn-by-ads
 description: >-
   通过 Google Ads Keyword Planner API 查询关键词搜索量、竞争度、CPC 与逐月趋势，
-  支持 worldwide 默认、指定国家、最近一月日均估算，并解读 close_variants 合并口径。
-  在用户要查关键词搜索量、Google Ads 搜索量、Keyword Planner 数据、
-  月均/日均搜索量、worldwide 或按国家搜索量时使用。
+  默认返回最近完整自然月搜索量（非 12 月平均），支持 worldwide、指定国家、日均估算，
+  并解读 close_variants 合并口径。在用户要查关键词搜索量、Google Ads 搜索量、
+  Keyword Planner 数据、月搜/日均、worldwide 或按国家搜索量时使用。
 ---
 
 # get-keywords-search-volumn-by-ads
 
 用 `packages/google-ads/keyword_volume.py` 拉 Keyword Planner 历史指标。
+
+## 回复口径（默认）
+
+用户问「搜索量」时：
+
+- **只报最近完整自然月**的 `latest_monthly_searches`（并注明月份，如 `2026-07`）
+- **不要**默认报 `average_monthly_searches`（12 月平均）；仅当用户明确要「月均 / 平均 / 12 个月平均」时再给
+- 用户要「日均」时加 `--daily`，并说明：日均 = 该月搜索量 ÷ 当月天数
 
 ## 前置
 
@@ -38,21 +46,27 @@ description: >-
 | 美国 | `--geo-target-id 2840` |
 | 中国 | `--geo-target-id 2156` |
 | 多国（最多 10） | 重复 `--geo-target-id` |
+| 不限语言（默认） | 不传 `--language-id` |
 | 英语 | `--language-id 1000` |
 | 简体中文 | `--language-id 1017` |
 | 最近完整月日均 | `--daily` |
+| 同时显示 12 月平均 | `--average` |
 | JSON 输出 | `--json` |
 | 写 CSV | `--csv /path/to/out.csv` |
 
 示例：
 
 ```bash
-# worldwide + 英语 + 日均
+# worldwide + 不限语言（默认：最近完整月）
 "<skill-directory>/scripts/query-keywords.py" \
-  --language-id 1000 --daily \
   "gpts" "image to text converter"
 
-# 美国
+# 日均
+"<skill-directory>/scripts/query-keywords.py" \
+  --daily \
+  "gpts"
+
+# 美国 + 英语
 "<skill-directory>/scripts/query-keywords.py" \
   --geo-target-id 2840 --language-id 1000 \
   "gpts"
@@ -64,19 +78,22 @@ description: >-
 
 用户未指定时：
 
-- **英文关键词** → `--language-id 1000`
-- **中文关键词** → `--language-id 1017`
+- **语言** → 不传 `--language-id`（**不限语言**）；仅当用户明确要求某语言时再传
 - **地域** → 不传 geo（**worldwide**），除非用户明确要求某国
 
 ## 输出格式
 
 ### 默认（markdown 表）
 
-按 `average_monthly_searches` 降序；加 `--daily` 时多一列「最近完整月日均」。
+列：`keyword` · `latest_month` · `latest_monthly_searches` · `competition` · `average_cpc`  
+按 **`latest_monthly_searches` 降序**（不是 12 月平均）。
+
+- `--daily` → 多一列 `daily_average`
+- `--average` → 多一列 `average_monthly_searches`
 
 ### JSON（`--json`）
 
-完整字段含 `monthly_search_volumes`（逐月数组）。
+完整字段含 `monthly_search_volumes`（逐月数组）以及 `latest_month` / `latest_monthly_searches`。
 
 用户要「最近一个月日均」时，**必须**加 `--daily`，并在回复中说明：
 
@@ -98,7 +115,7 @@ Keyword Planner 会做 **near-exact 合并**，不等于 Google Trends 字面词
 用户质疑某词被放大/缩小时，**同一批**再查近义与上下位词，对比 `close_variants` 与量级，例如：
 
 ```bash
-"<skill-directory>/scripts/query-keywords.py" --language-id 1000 --json \
+"<skill-directory>/scripts/query-keywords.py" --json \
   "gpts" "gpt" "chatgpt gpts" \
   "image to text converter" "image to text" "image to text generator" "ocr"
 ```
@@ -111,7 +128,6 @@ cd packages/google-ads && source .venv/bin/activate
 python keyword_volume.py \
   --login-customer-id 1265134925 \
   --customer-id 1265134925 \
-  --language-id 1000 \
   --json \
   "keyword one" "keyword two"
 ```

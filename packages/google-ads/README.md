@@ -111,7 +111,7 @@ python keyword_ideas.py ... --site www.example.com
 | `--login-customer-id` | 覆盖 MCC 登录 ID | 配置文件 |
 | `--config` | `google-ads.yaml` 路径 | `./google-ads.yaml` |
 | `--geo-target-id` | 地域 ID（可重复，最多 10 个） | 不传 = **worldwide** |
-| `--language-id` | 语言 ID | `1017`（简体中文） |
+| `--language-id` | 语言 ID | 不传 = **不限语言**（1000=英语，1017=简体中文） |
 | `--json` | 输出 JSON 到 stdout（脚本/API 用） | 否 |
 | `--csv` | CSV 文件路径 | 无（可选） |
 

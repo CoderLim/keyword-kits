@@ -45,20 +45,26 @@ def enrich_rows(rows: list[dict], include_daily: bool) -> list[dict]:
     enriched: list[dict] = []
     for row in rows:
         item = dict(row)
-        if include_daily:
-            month = latest_month(row.get("monthly_search_volumes") or [])
-            if month:
-                month_num = MONTHS[month["month"]]
-                item["latest_month"] = f"{month['year']}-{month_num:02d}"
-                item["latest_monthly_searches"] = month["monthly_searches"]
+        month = latest_month(row.get("monthly_search_volumes") or [])
+        if month:
+            month_num = MONTHS[month["month"]]
+            item["latest_month"] = f"{month['year']}-{month_num:02d}"
+            item["latest_monthly_searches"] = month["monthly_searches"]
+            if include_daily:
                 item["daily_average"] = round(
                     daily_average(month["monthly_searches"], month["year"], month_num)
                 )
-            else:
-                item["latest_month"] = None
-                item["latest_monthly_searches"] = None
+        else:
+            item["latest_month"] = None
+            item["latest_monthly_searches"] = None
+            if include_daily:
                 item["daily_average"] = None
         enriched.append(item)
+    # Default ranking: latest complete month, not 12-month average.
+    enriched.sort(
+        key=lambda row: row.get("latest_monthly_searches") or 0,
+        reverse=True,
+    )
     return enriched
 
 
@@ -76,11 +82,11 @@ def build_command(args: argparse.Namespace) -> list[str]:
         args.login_customer_id,
         "--customer-id",
         args.customer_id,
-        "--language-id",
-        args.language_id,
         "--json",
         *args.keywords,
     ]
+    if args.language_id:
+        command.extend(["--language-id", args.language_id])
     for geo_target_id in args.geo_target_ids or []:
         command.extend(["--geo-target-id", geo_target_id])
     if args.csv:
@@ -88,19 +94,22 @@ def build_command(args: argparse.Namespace) -> list[str]:
     return command
 
 
-def print_markdown(rows: list[dict], include_daily: bool) -> None:
+def print_markdown(rows: list[dict], include_daily: bool, include_average: bool) -> None:
     if not rows:
         print("No keyword metrics returned.")
         return
 
     headers = [
         "keyword",
-        "average_monthly_searches",
+        "latest_month",
+        "latest_monthly_searches",
         "competition",
         "average_cpc",
     ]
     if include_daily:
-        headers.extend(["latest_month", "daily_average"])
+        headers.append("daily_average")
+    if include_average:
+        headers.append("average_monthly_searches")
 
     widths = {
         header: max(
@@ -149,8 +158,11 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--language-id",
-        default="1000",
-        help="Language constant ID (default: 1000 English).",
+        default=None,
+        help=(
+            "Language constant ID (1000=English, 1017=Chinese Simplified). "
+            "Omit for all languages."
+        ),
     )
     parser.add_argument(
         "--geo-target-id",
@@ -162,7 +174,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--daily",
         action="store_true",
-        help="Add latest complete month and daily average estimate.",
+        help="Also show daily average of the latest complete month.",
+    )
+    parser.add_argument(
+        "--average",
+        action="store_true",
+        help="Also show 12-month average_monthly_searches.",
     )
     parser.add_argument(
         "--json",
@@ -206,7 +223,11 @@ def main() -> int:
     if args.json:
         print(json.dumps(rows, ensure_ascii=False, indent=2))
     else:
-        print_markdown(rows, include_daily=args.daily)
+        print_markdown(
+            rows,
+            include_daily=args.daily,
+            include_average=args.average,
+        )
 
     if args.csv:
         print(f"\nWrote CSV to {args.csv.resolve()}", file=sys.stderr)

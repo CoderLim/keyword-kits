@@ -246,6 +246,38 @@ class KeywordVolumeTests(unittest.TestCase):
         self.assertEqual(request.geo_target_constants, [])
         googleads_service.geo_target_constant_path.assert_not_called()
 
+    def test_fetch_keyword_metrics_omits_language_when_unset(self):
+        googleads_service = mock.Mock()
+        keyword_plan_idea_service = mock.Mock()
+        keyword_plan_idea_service.generate_keyword_historical_metrics.return_value = (
+            SimpleNamespace(results=[])
+        )
+
+        request = SimpleNamespace(
+            keywords=[],
+            geo_target_constants=[],
+            historical_metrics_options=SimpleNamespace(include_average_cpc=False),
+        )
+
+        client = mock.Mock()
+        client.get_service.side_effect = lambda name: {
+            "GoogleAdsService": googleads_service,
+            "KeywordPlanIdeaService": keyword_plan_idea_service,
+        }[name]
+        client.get_type.return_value = request
+        client.enums.KeywordPlanNetworkEnum.GOOGLE_SEARCH = "GOOGLE_SEARCH"
+
+        from keyword_volume import fetch_keyword_metrics
+
+        fetch_keyword_metrics(
+            client=client,
+            customer_id="1265134925",
+            keywords=["gpts"],
+        )
+
+        self.assertFalse(hasattr(request, "language"))
+        googleads_service.language_constant_path.assert_not_called()
+
 
 if __name__ == "__main__":
     unittest.main()

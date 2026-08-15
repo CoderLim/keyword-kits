@@ -98,7 +98,7 @@ def fetch_keyword_metrics(
     client,
     customer_id: str,
     keywords: Sequence[str],
-    language_id: str,
+    language_id: str | None = None,
     geo_target_ids: Sequence[str] | None = None,
 ) -> list[dict]:
     googleads_service = client.get_service("GoogleAdsService")
@@ -115,7 +115,9 @@ def fetch_keyword_metrics(
     request.keyword_plan_network = (
         client.enums.KeywordPlanNetworkEnum.GOOGLE_SEARCH
     )
-    request.language = googleads_service.language_constant_path(language_id)
+    # Omit language = all languages (API default).
+    if language_id:
+        request.language = googleads_service.language_constant_path(language_id)
     request.historical_metrics_options.include_average_cpc = True
 
     response = keyword_plan_idea_service.generate_keyword_historical_metrics(
@@ -256,10 +258,10 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--language-id",
-        default=DEFAULT_LANGUAGE_ID,
+        default=None,
         help=(
-            f"Language constant ID (default: {DEFAULT_LANGUAGE_ID} for "
-            "Chinese Simplified)."
+            "Language constant ID (1000=English, 1017=Chinese Simplified). "
+            "Omit for all languages."
         ),
     )
     parser.add_argument(
