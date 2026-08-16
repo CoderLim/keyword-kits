@@ -1,12 +1,12 @@
 ---
-name: daily-report
+name: keywords-daily-report
 description: >-
   生成关键词日报：汇总 huggingface.co 着陆页新点击量前 10，以及 subdomain-keywords
   （托管子域名平台新词），并在文末输出合并后的 Google Trends URLs。
-  在用户提到日报、daily report、/daily-report、HF+子域名关键词汇总或每日 Trends 对比时使用。
+  在用户提到日报、daily report、/keywords-daily-report、/daily-report、HF+子域名关键词汇总或每日 Trends 对比时使用。
 ---
 
-# daily-report
+# keywords-daily-report
 
 汇总两路「新点击量」关键词，输出一份日报，并在底部追加 Google Trends URLs。
 
@@ -25,9 +25,9 @@ description: >-
 优先跑仓库脚本（推荐）：
 
 ```bash
-OPENCLI_BROWSER_COMMAND_TIMEOUT=180 node scripts/daily-report.mjs
+OPENCLI_BROWSER_COMMAND_TIMEOUT=180 node scripts/keywords-daily-report.mjs
 # JSON：
-OPENCLI_BROWSER_COMMAND_TIMEOUT=180 node scripts/daily-report.mjs --json
+OPENCLI_BROWSER_COMMAND_TIMEOUT=180 node scripts/keywords-daily-report.mjs --json
 ```
 
 脚本内部会：

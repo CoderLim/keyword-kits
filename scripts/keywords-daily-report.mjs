@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 /**
- * daily-report — HuggingFace new-click landing pages (top 10)
+ * keywords-daily-report — HuggingFace new-click landing pages (top 10)
  * + subdomain-keywords, then Google Trends URLs for the combined set.
  *
  * Usage:
- *   OPENCLI_BROWSER_COMMAND_TIMEOUT=180 node scripts/daily-report.mjs
- *   OPENCLI_BROWSER_COMMAND_TIMEOUT=180 node scripts/daily-report.mjs --json
+ *   OPENCLI_BROWSER_COMMAND_TIMEOUT=180 node scripts/keywords-daily-report.mjs
+ *   OPENCLI_BROWSER_COMMAND_TIMEOUT=180 node scripts/keywords-daily-report.mjs --json
  */
 
 import { execFileSync } from 'node:child_process';
