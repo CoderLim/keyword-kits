@@ -35,6 +35,7 @@ description: >-
 - `workers.dev`
 - `neocities.org`
 - `carrd.co`
+- `miraheze.org`
 
 ## 执行步骤
 

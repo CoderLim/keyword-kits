@@ -26,6 +26,7 @@ const DOMAINS = [
   'workers.dev',
   'neocities.org',
   'carrd.co',
+  'miraheze.org',
 ];
 
 const LIMIT = 10;
