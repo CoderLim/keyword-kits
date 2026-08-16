@@ -36,6 +36,7 @@ description: >-
 - `neocities.org`
 - `carrd.co`
 - `miraheze.org`
+- `itch.io`
 
 ## 执行步骤
 

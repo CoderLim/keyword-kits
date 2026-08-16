@@ -27,6 +27,7 @@ const DOMAINS = [
   'neocities.org',
   'carrd.co',
   'miraheze.org',
+  'itch.io',
 ];
 
 const LIMIT = 10;
