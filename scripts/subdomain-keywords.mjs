@@ -28,6 +28,8 @@ const DOMAINS = [
   'carrd.co',
   'miraheze.org',
   'itch.io',
+  'wiki.gg',
+  'fandom.com',
 ];
 
 const LIMIT = 10;

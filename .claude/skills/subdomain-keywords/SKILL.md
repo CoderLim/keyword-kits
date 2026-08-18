@@ -37,6 +37,8 @@ description: >-
 - `carrd.co`
 - `miraheze.org`
 - `itch.io`
+- `wiki.gg`
+- `fandom.com`
 
 ## 执行步骤
 
