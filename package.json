@@ -2,7 +2,7 @@
   "name": "opencli-plugins",
   "version": "0.3.0",
   "private": true,
-  "description": "OpenCLI plugin monorepo: sim + google-trends + google-suggest + query-domain + ahrefs + namecheap + sem + aitdk + steamdb",
+  "description": "OpenCLI plugin monorepo: sim + google-trends + google-suggest + query-domain + ahrefs + namecheap + sem + aitdk + gsc + steamdb",
   "repository": {
     "type": "git",
     "url": "https://github.com/CoderLim/keyword-kits.git"
@@ -17,10 +17,11 @@
     "packages/namecheap",
     "packages/sem",
     "packages/aitdk",
+    "packages/gsc",
     "packages/steamdb"
   ],
   "scripts": {
-    "build": "npm run build -w opencli-plugin-sim && npm run build -w opencli-plugin-google-trends && npm run build -w opencli-plugin-google-suggest && npm run build -w opencli-plugin-query-domain && npm run build -w opencli-plugin-ahrefs && npm run build -w opencli-plugin-namecheap && npm run build -w opencli-plugin-sem && npm run build -w opencli-plugin-aitdk && npm run build -w opencli-plugin-steamdb",
+    "build": "npm run build -w opencli-plugin-sim && npm run build -w opencli-plugin-google-trends && npm run build -w opencli-plugin-google-suggest && npm run build -w opencli-plugin-query-domain && npm run build -w opencli-plugin-ahrefs && npm run build -w opencli-plugin-namecheap && npm run build -w opencli-plugin-sem && npm run build -w opencli-plugin-aitdk && npm run build -w opencli-plugin-gsc && npm run build -w opencli-plugin-steamdb",
     "build:sim": "npm run build -w opencli-plugin-sim",
     "build:google-trends": "npm run build -w opencli-plugin-google-trends",
     "build:google-suggest": "npm run build -w opencli-plugin-google-suggest",
@@ -29,6 +30,7 @@
     "build:namecheap": "npm run build -w opencli-plugin-namecheap",
     "build:sem": "npm run build -w opencli-plugin-sem",
     "build:aitdk": "npm run build -w opencli-plugin-aitdk",
+    "build:gsc": "npm run build -w opencli-plugin-gsc",
     "build:steamdb": "npm run build -w opencli-plugin-steamdb",
     "extract:aitdk-secret": "node scripts/extract-aitdk-secret.mjs",
     "subdomain-keywords": "node scripts/subdomain-keywords.mjs"

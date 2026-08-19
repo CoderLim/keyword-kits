@@ -1,0 +1,6 @@
+{
+  "name": "gsc",
+  "version": "0.1.0",
+  "description": "Google Search Console control (request-indexing)",
+  "opencli": ">=1.8.6"
+}

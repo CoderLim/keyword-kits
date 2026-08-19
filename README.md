@@ -1,4 +1,4 @@
-# opencli plugins (sim + google-trends + google-suggest + query-domain + ahrefs + namecheap + sem + aitdk)
+# opencli plugins (sim + google-trends + google-suggest + query-domain + ahrefs + namecheap + sem + aitdk + gsc)
 
 基于 [opencli](https://github.com/jackwener/OpenCLI) 的插件 monorepo：
 
@@ -12,6 +12,7 @@
 | [`packages/namecheap`](packages/namecheap) | Namecheap 域名 Custom DNS nameserver 设置，需已登录 Chrome |
 | [`packages/sem`](packages/sem) | SEMrush（`sem.3ue.com`）域名查询与反向链接，需已登录 Chrome |
 | [`packages/aitdk`](packages/aitdk) | AITDK 域名 SEO 数据快照（whois + 流量），`aitdk get-data`，PUBLIC，无需 Chrome |
+| [`packages/gsc`](packages/gsc) | Google Search Console：`gsc request-indexing`，需已登录 Chrome 中的 Google 账号 |
 | [`packages/google-ads`](packages/google-ads) | Google Ads API 关键词历史指标与拓词（Python CLI：`GenerateKeywordHistoricalMetrics` / `GenerateKeywordIdeas`） |
 
 仓库：https://github.com/CoderLim/keyword-kits
@@ -62,6 +63,7 @@ opencli plugin install file://$(pwd)/packages/ahrefs
 opencli plugin install file://$(pwd)/packages/namecheap
 opencli plugin install file://$(pwd)/packages/sem
 opencli plugin install file://$(pwd)/packages/aitdk
+opencli plugin install file://$(pwd)/packages/gsc
 ```
 
 从 GitHub monorepo 安装：
@@ -77,6 +79,7 @@ opencli plugin install github:CoderLim/keyword-kits/ahrefs
 opencli plugin install github:CoderLim/keyword-kits/namecheap
 opencli plugin install github:CoderLim/keyword-kits/sem
 opencli plugin install github:CoderLim/keyword-kits/aitdk
+opencli plugin install github:CoderLim/keyword-kits/gsc
 ```
 
 确认：
@@ -92,6 +95,7 @@ opencli ahrefs kd --help
 opencli ahrefs backlinks --help
 opencli namecheap set-nameserver --help
 opencli aitdk get-data --help
+opencli gsc request-indexing --help
 ```
 
 更新 / 卸载：
@@ -105,6 +109,7 @@ opencli plugin update ahrefs
 opencli plugin update namecheap
 opencli plugin update sem
 opencli plugin update aitdk
+opencli plugin update gsc
 opencli plugin uninstall sim
 opencli plugin uninstall google-trends
 opencli plugin uninstall google-suggest
@@ -113,6 +118,7 @@ opencli plugin uninstall ahrefs
 opencli plugin uninstall namecheap
 opencli plugin uninstall sem
 opencli plugin uninstall aitdk
+opencli plugin uninstall gsc
 ```
 
 ---
@@ -134,6 +140,7 @@ opencli plugin uninstall aitdk
 | `ahrefs backlinks` | ahrefs | 免费 Backlink Checker（DR + 外链） |
 | `namecheap set-nameserver` | namecheap | 设置域名 Custom DNS nameservers |
 | `aitdk get-data` | aitdk | 域名 SEO 数据快照（whois + 流量，无需 Chrome） |
+| `gsc request-indexing` | gsc | 在 Google Search Console 中检查 URL 并触发 Request indexing |
 
 官方内置 `google trends`（RSS 日报热搜）仍可用，与本仓库的 `google-trends now` / `explore` 互不覆盖。
 
@@ -266,6 +273,41 @@ opencli aitdk get-data https://www.ahrefs.com/pricing -f yaml
 **签名失效（403）：** AITDK 扩展轮换了内置密钥。运行 `npm run extract:aitdk-secret`（脚本会从 `extension.aitdk.com` 的 JS bundle 重新解码出当前 `secretKey` 并发一个签名请求验证 HTTP 200），把打印出的 `export const SECRET = '...';` 粘进 `packages/aitdk/src/lib.ts`，再 `npm run build:aitdk && opencli plugin update aitdk`。
 
 设计文档：[`docs/superpowers/plans/2026-08-05-aitdk-get-data.md`](docs/superpowers/plans/2026-08-05-aitdk-get-data.md)
+
+---
+
+## `gsc request-indexing`
+
+在 Google Search Console 中打开指定 property，检查 URL，并尝试点击 **Request indexing**。
+
+需 Chrome + OpenCLI 扩展，且浏览器中已登录有对应 property 权限的 Google 账号。
+
+```bash
+opencli gsc request-indexing https://example.com/page
+opencli gsc request-indexing https://example.com/page --property sc-domain:example.com -f json
+opencli gsc request-indexing https://www.example.com/tools/foo --property https://www.example.com/ -f json
+```
+
+| 参数 | 类型 | 默认 | 说明 |
+|------|------|------|------|
+| `url` | string（位置） | — | 要检查并请求收录的完整 URL |
+| `--property` | string | URL 的 `origin/` | GSC property；支持 `sc-domain:example.com` 或完整 URL-prefix |
+
+输出列：`url`、`property`、`status`、`message`
+
+**状态说明：**
+
+- `submitted`：已明确看到成功提交文案
+- `submitted_or_already_requested`：按钮消失，推测已提交或之前已请求
+- `quota_or_already_requested`：点击后按钮变灰，可能是额度或已请求
+- `temporarily_unavailable`：GSC 当前暂时不可用
+- `page_not_requestable`：页面当前抓取 / 索引条件不满足
+
+**说明：**
+
+- 如果不传 `--property`，命令会默认使用 URL 的 `origin/` 作为 URL-prefix property。
+- 如果你实际使用的是 Domain property，建议显式传 `--property sc-domain:example.com`。
+- Google 的 UI 文案和状态提示并不完全稳定，因此部分结果会以“弱信号”做保守判定。
 
 ---
 
@@ -628,6 +670,13 @@ OPENCLI_BROWSER_COMMAND_TIMEOUT=180 opencli sim web-ranking --limit 10 -f json
 - **源码**：`packages/aitdk/src/lib.ts`、`packages/aitdk/src/get-data.ts`  
 - **产物**：`packages/aitdk/get-data.js`（`npm run build`，gitignore）
 
+### gsc
+
+- **策略**：`Strategy.UI`（需已登录 Google Search Console）  
+- **页面**：`https://search.google.com/search-console?resource_id=...`  
+- **源码**：`packages/gsc/src/lib.ts`、`packages/gsc/src/request-indexing.ts`  
+- **产物**：`packages/gsc/lib.js`、`packages/gsc/request-indexing.js`
+
 设计文档（sim）：
 
 - [`docs/superpowers/specs/2026-07-23-sim-backlinks-design.md`](docs/superpowers/specs/2026-07-23-sim-backlinks-design.md)
@@ -652,6 +701,7 @@ opencli plugin install file://$(pwd)/packages/query-domain
 opencli plugin install file://$(pwd)/packages/ahrefs
 opencli plugin install file://$(pwd)/packages/namecheap
 opencli plugin install file://$(pwd)/packages/aitdk
+opencli plugin install file://$(pwd)/packages/gsc
 
 opencli google-trends now --limit 5 -f json
 opencli google-trends explore "pdf to jpg" "jpg to pdf" --geo US -f json
@@ -660,6 +710,7 @@ opencli queryDomain search "ai image" -f json
 OPENCLI_BROWSER_COMMAND_TIMEOUT=180 opencli ahrefs kd "keyword research" -f json
 OPENCLI_BROWSER_COMMAND_TIMEOUT=180 opencli ahrefs backlinks ahrefs.com -f json
 opencli aitdk get-data ahrefs.com -f json
+opencli gsc request-indexing https://example.com/page --property sc-domain:example.com -f json
 ```
 
 目录结构：
@@ -706,6 +757,13 @@ keyword-kits/
 │   │   ├── src/lib.ts
 │   │   ├── src/get-data.ts
 │   │   └── get-data.js          # build 产物
+│   ├── gsc/
+│   │   ├── opencli-plugin.json
+│   │   ├── package.json
+│   │   ├── src/lib.ts
+│   │   ├── src/request-indexing.ts
+│   │   ├── lib.js
+│   │   └── request-indexing.js  # build 产物
 ├── scripts/
 ├── .claude/skills/
 ├── README.md
