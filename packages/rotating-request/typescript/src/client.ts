@@ -83,9 +83,9 @@ export class RotatingClient {
     return dispatcher;
   }
 
-  private rotate(context: RotationContext): void {
-    if (!this.baseProxy || !this.currentProxy || !this.rotator) return;
-    this.currentProxy = this.rotator.rotate(this.baseProxy, this.currentProxy, context);
+  private rotateProxy(currentProxy: string, context: RotationContext): string {
+    if (!this.baseProxy || !this.rotator) return currentProxy;
+    return this.rotator.rotate(this.baseProxy, currentProxy, context);
   }
 
   private static retryDelay(retryAfter: string | null, retryNumber: number): number {
@@ -106,18 +106,20 @@ export class RotatingClient {
     const url = typeof input === "string"
       ? input
       : ("url" in input ? input.url : input.toString());
+    let requestProxy = this.currentProxy;
     for (let attempt = 1; attempt <= this.maxAttempts; attempt += 1) {
       const requestInit: RequestInit = { ...init };
-      if (this.currentProxy) {
-        requestInit.dispatcher = this.dispatcherFor(this.currentProxy);
+      if (requestProxy) {
+        requestInit.dispatcher = this.dispatcherFor(requestProxy);
       }
       const response = await this.fetchImpl(input, requestInit);
-      const canRetry = response.status === 429
-        && this.retryMethods.has(method)
-        && this.currentProxy !== undefined
-        && this.rotator !== undefined
-        && attempt < this.maxAttempts;
-      if (!canRetry) return response;
+      if (response.status !== 429
+        || !this.retryMethods.has(method)
+        || requestProxy === undefined
+        || this.rotator === undefined
+        || attempt >= this.maxAttempts) {
+        return response;
+      }
 
       const delay = RotatingClient.retryDelay(response.headers.get("Retry-After"), attempt);
       try {
@@ -125,7 +127,8 @@ export class RotatingClient {
       } catch {
         // The response is being discarded regardless; cancellation is best effort.
       }
-      this.rotate({ attempt, method, url, statusCode: 429 });
+      requestProxy = this.rotateProxy(requestProxy, { attempt, method, url, statusCode: 429 });
+      this.currentProxy = requestProxy;
       await this.sleeper(delay);
     }
     throw new Error("unreachable");
@@ -159,7 +162,7 @@ export class RotatingClient {
           || !this.rotator) {
           throw error;
         }
-        this.rotate({ attempt, error });
+        this.currentProxy = this.rotateProxy(this.currentProxy, { attempt, error });
         await this.sleeper(attempt * 2);
       }
     }

@@ -15,6 +15,12 @@ from rotating_request import (
 CONTRACT_PATH = Path(__file__).parents[2] / "contract" / "qingguo-cases.json"
 
 
+def test_python_distribution_ships_the_complete_mit_notice():
+    license_text = (Path(__file__).parents[1] / "LICENSE").read_text()
+    assert "Permission is hereby granted, free of charge" in license_text
+    assert 'THE SOFTWARE IS PROVIDED "AS IS"' in license_text
+
+
 @pytest.mark.parametrize("case", json.loads(CONTRACT_PATH.read_text()), ids=lambda case: case["name"])
 def test_qingguo_rotator_follows_shared_contract(case):
     rotator = QingGuoRotator(

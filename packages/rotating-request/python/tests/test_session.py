@@ -1,5 +1,6 @@
 from collections import deque
 
+import pytest
 from requests import Response
 from requests.adapters import BaseAdapter
 
@@ -79,6 +80,17 @@ def test_retry_after_header_takes_precedence_over_fallback_delay():
     assert sleeps == [7.0]
 
 
+def test_non_finite_retry_after_falls_back_to_normal_delay():
+    session, _adapter, sleeps = make_session(
+        [make_response(429, {"Retry-After": "Infinity"}), make_response(200)]
+    )
+
+    response = session.get("https://example.com/data")
+
+    assert response.status_code == 200
+    assert sleeps == [2.0]
+
+
 def test_exhaustion_returns_the_last_429_response():
     responses = [make_response(429), make_response(429), make_response(429)]
     session, adapter, sleeps = make_session(responses, max_attempts=3)
@@ -99,6 +111,11 @@ def test_429_without_proxy_is_returned_without_retry():
 
     assert response.status_code == 429
     assert len(adapter.calls) == 1
+
+
+def test_max_attempts_must_be_an_integer():
+    with pytest.raises(ValueError, match="positive integer"):
+        RotatingSession(max_attempts=2.5)
 
 
 def test_from_env_uses_qingguo_proxy_without_manual_configuration():

@@ -75,6 +75,8 @@ finally:
 
 `run()` 只捕获 `rotate_on` 明确指定的异常；其他异常立即原样抛出。
 
+`requests.Session` 本身不承诺线程安全；不要让多个线程共享同一个 `RotatingSession`。每个并发任务应创建自己的 session。
+
 ## TypeScript/npm
 
 安装：
@@ -98,6 +100,8 @@ try {
 ```
 
 Node 实现使用 `undici.ProxyAgent`。调用结束后应执行 `close()`，释放为各个代理 channel 缓存的连接池。
+
+普通 `request()`/`get()` 支持并发调用，每个请求会保留自己的重试代理。操作级 `run()` 会改变客户端当前代理，不要在同一个客户端上并发执行多个 `run()`，也不要让 `run()` 与其他请求交错；并发操作请分别创建客户端。
 
 操作级重试使用异常判断函数：
 

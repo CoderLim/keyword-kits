@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
+import math
 import os
 import time
 from typing import Any, Callable, Iterable, Mapping, Optional, Tuple, Type, TypeVar, Union
@@ -24,8 +25,7 @@ class RotatingSession(requests.Session):
         sleeper: Callable[[float], None] = time.sleep,
     ) -> None:
         super().__init__()
-        if max_attempts < 1:
-            raise ValueError("max_attempts must be at least 1")
+        self._validate_max_attempts(max_attempts)
         self.base_proxy = proxy
         self.current_proxy = proxy
         self.rotator = rotator or (QingGuoRotator() if proxy else None)
@@ -67,18 +67,26 @@ class RotatingSession(requests.Session):
         self._apply_proxy(self.current_proxy)
 
     @staticmethod
+    def _validate_max_attempts(value: object) -> None:
+        if isinstance(value, bool) or not isinstance(value, int) or value < 1:
+            raise ValueError("max_attempts must be a positive integer")
+
+    @staticmethod
     def _retry_delay(retry_after: Optional[str], retry_number: int) -> float:
         if retry_after:
             try:
-                return max(0.0, float(retry_after))
+                seconds = float(retry_after)
+                if math.isfinite(seconds):
+                    return max(0.0, seconds)
             except ValueError:
-                try:
-                    retry_at = parsedate_to_datetime(retry_after)
-                    if retry_at.tzinfo is None:
-                        retry_at = retry_at.replace(tzinfo=timezone.utc)
-                    return max(0.0, (retry_at - datetime.now(timezone.utc)).total_seconds())
-                except (TypeError, ValueError, OverflowError):
-                    pass
+                pass
+            try:
+                retry_at = parsedate_to_datetime(retry_after)
+                if retry_at.tzinfo is None:
+                    retry_at = retry_at.replace(tzinfo=timezone.utc)
+                return max(0.0, (retry_at - datetime.now(timezone.utc)).total_seconds())
+            except (TypeError, ValueError, OverflowError):
+                pass
         return float(retry_number * 2)
 
     def request(self, method: str, url: str, **kwargs: Any) -> requests.Response:
@@ -122,8 +130,7 @@ class RotatingSession(requests.Session):
         max_attempts: Optional[int] = None,
     ) -> T:
         attempts = self.max_attempts if max_attempts is None else max_attempts
-        if attempts < 1:
-            raise ValueError("max_attempts must be at least 1")
+        self._validate_max_attempts(attempts)
 
         for attempt in range(1, attempts + 1):
             try:

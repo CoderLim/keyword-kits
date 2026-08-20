@@ -21,6 +21,12 @@ const contract = JSON.parse(
   readFileSync(new URL("../../contract/qingguo-cases.json", import.meta.url), "utf8"),
 ) as ContractCase[];
 
+it("ships the complete MIT notice with the npm package", () => {
+  const license = readFileSync(new URL("../LICENSE", import.meta.url), "utf8");
+  assert.match(license, /Permission is hereby granted, free of charge/);
+  assert.match(license, /THE SOFTWARE IS PROVIDED "AS IS"/);
+});
+
 describe("QingGuoRotator", () => {
   for (const testCase of contract) {
     it(`follows shared contract: ${testCase.name}`, () => {

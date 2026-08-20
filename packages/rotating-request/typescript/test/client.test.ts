@@ -137,6 +137,50 @@ describe("RotatingClient HTTP retries", () => {
     ]);
   });
 
+  it("keeps rotated proxies isolated between concurrent requests", async () => {
+    const calls = new Map<string, string[]>();
+    let sleeping = 0;
+    let releaseSleepers!: () => void;
+    const bothSleeping = new Promise<void>((resolve) => { releaseSleepers = resolve; });
+    const client = new RotatingClient({
+      proxy: BASE_PROXY,
+      rotator: {
+        rotate(baseProxy, _currentProxy, context) {
+          const requestName = context.url?.endsWith("/a") ? "a" : "b";
+          return baseProxy.replace("channel-", `channel-${requestName}-`);
+        },
+      },
+      fetch: async (input, init) => {
+        const url = input.toString();
+        const proxy = (init?.dispatcher as unknown as { proxy: string }).proxy;
+        const requestCalls = calls.get(url) ?? [];
+        requestCalls.push(proxy);
+        calls.set(url, requestCalls);
+        return new Response("", { status: requestCalls.length === 1 ? 429 : 200 });
+      },
+      dispatcherFactory: (proxy) => fakeDispatcher(proxy, []),
+      sleeper: async () => {
+        sleeping += 1;
+        if (sleeping === 2) releaseSleepers();
+        await bothSleeping;
+      },
+    });
+
+    await Promise.all([
+      client.get("https://example.com/a"),
+      client.get("https://example.com/b"),
+    ]);
+
+    assert.deepEqual(calls.get("https://example.com/a"), [
+      BASE_PROXY,
+      "http://alice:secret:channel-a-default:60@proxy.example:1234",
+    ]);
+    assert.deepEqual(calls.get("https://example.com/b"), [
+      BASE_PROXY,
+      "http://alice:secret:channel-b-default:60@proxy.example:1234",
+    ]);
+  });
+
   it("creates a configured client from environment variables", () => {
     const client = RotatingClient.fromEnv({
       env: {
