@@ -1,4 +1,0 @@
-interface:
-  display_name: "SteamDB Keywords"
-  short_description: "Find new Steam game keywords with open domains"
-  default_prompt: "Use $steamdb-keywords to find partially available .com/.org/.net keywords from games released in the last three months."
