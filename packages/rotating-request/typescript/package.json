@@ -1,0 +1,33 @@
+{
+  "name": "@keyword-kits/rotating-request",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "HTTP 429 retries with automatic proxy IP rotation",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "esbuild test/*.test.ts --bundle --outdir=.test-dist --format=esm --platform=node --packages=external && node --test .test-dist/*.test.js"
+  },
+  "dependencies": {
+    "undici": "^6.27.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.1",
+    "esbuild": "^0.28.1",
+    "typescript": "^5.9.3"
+  }
+}

@@ -15,6 +15,8 @@
 | [`packages/gsc`](packages/gsc) | Google Search Console：`gsc request-indexing`，需已登录 Chrome 中的 Google 账号 |
 | [`packages/google-ads`](packages/google-ads) | Google Ads API 关键词历史指标与拓词（Python CLI：`GenerateKeywordHistoricalMetrics` / `GenerateKeywordIdeas`） |
 
+通用库：[`packages/rotating-request`](packages/rotating-request) 提供 Python 与 TypeScript/npm 两套 429 自动切换代理 IP 的请求客户端，并兼容 `youtube-transcript-api` 的操作级封禁异常重试。
+
 仓库：https://github.com/CoderLim/keyword-kits
 
 ---

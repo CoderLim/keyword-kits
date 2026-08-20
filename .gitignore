@@ -25,6 +25,11 @@ packages/sem/backlinks.js
 packages/aitdk/get-data.js
 packages/steamdb/new-trending-lib.js
 packages/steamdb/new-trending.js
+packages/rotating-request/typescript/dist/
+packages/rotating-request/typescript/.test-dist/
+packages/rotating-request/python/.pytest_cache/
+packages/rotating-request/python/**/__pycache__/
+packages/rotating-request/python/dist/
 
 # google-ads (Python)
 packages/google-ads/.venv/

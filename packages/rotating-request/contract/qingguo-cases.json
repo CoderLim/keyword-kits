@@ -1,0 +1,16 @@
+[
+  {
+    "name": "default channel prefix",
+    "baseProxy": "http://alice:secret:channel-default:60@proxy.example:1234",
+    "channelPrefix": "channel",
+    "tag": "request-ab12",
+    "expected": "http://alice:secret:channel-request-ab12-default:60@proxy.example:1234"
+  },
+  {
+    "name": "custom channel prefix",
+    "baseProxy": "http://alice:secret:session-default:60@proxy.example:1234",
+    "channelPrefix": "session",
+    "tag": "retry-2",
+    "expected": "http://alice:secret:session-retry-2-default:60@proxy.example:1234"
+  }
+]

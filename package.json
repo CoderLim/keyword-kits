@@ -18,10 +18,11 @@
     "packages/sem",
     "packages/aitdk",
     "packages/gsc",
-    "packages/steamdb"
+    "packages/steamdb",
+    "packages/rotating-request/typescript"
   ],
   "scripts": {
-    "build": "npm run build -w opencli-plugin-sim && npm run build -w opencli-plugin-google-trends && npm run build -w opencli-plugin-google-suggest && npm run build -w opencli-plugin-query-domain && npm run build -w opencli-plugin-ahrefs && npm run build -w opencli-plugin-namecheap && npm run build -w opencli-plugin-sem && npm run build -w opencli-plugin-aitdk && npm run build -w opencli-plugin-gsc && npm run build -w opencli-plugin-steamdb",
+    "build": "npm run build -w opencli-plugin-sim && npm run build -w opencli-plugin-google-trends && npm run build -w opencli-plugin-google-suggest && npm run build -w opencli-plugin-query-domain && npm run build -w opencli-plugin-ahrefs && npm run build -w opencli-plugin-namecheap && npm run build -w opencli-plugin-sem && npm run build -w opencli-plugin-aitdk && npm run build -w opencli-plugin-gsc && npm run build -w opencli-plugin-steamdb && npm run build -w @keyword-kits/rotating-request",
     "build:sim": "npm run build -w opencli-plugin-sim",
     "build:google-trends": "npm run build -w opencli-plugin-google-trends",
     "build:google-suggest": "npm run build -w opencli-plugin-google-suggest",
@@ -32,6 +33,7 @@
     "build:aitdk": "npm run build -w opencli-plugin-aitdk",
     "build:gsc": "npm run build -w opencli-plugin-gsc",
     "build:steamdb": "npm run build -w opencli-plugin-steamdb",
+    "build:rotating-request": "npm run build -w @keyword-kits/rotating-request",
     "extract:aitdk-secret": "node scripts/extract-aitdk-secret.mjs",
     "subdomain-keywords": "node scripts/subdomain-keywords.mjs"
   }
