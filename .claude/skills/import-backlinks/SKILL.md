@@ -6,6 +6,7 @@ description: >-
   ahrefs 易失败，失败不重试直接跳过。底层经 DR 过滤与 hostname 去重。
   标准三源导入结束后，移除本次新增且 hostname 包含 search.yahoo 的候选。
   任务结束必须清理残留（opencli site session；孤儿 chrome-headless-shell）。
+  非 dry-run 导入完成后必须在 link-master 仓库 commit + push 数据变更。
   在用户提到导入外链、import backlinks、import candidate backlinks、给某域名导入外链时使用。
 ---
 
@@ -38,8 +39,9 @@ bash /Users/coderlim/.claude/skills/import-backlinks/scripts/import-all.sh <webs
 - sim/sem 任一失败不阻塞后续；脚本 exit 非 0 提示 sim/sem 有失败（这两个可酌情重试，ahrefs 不重试）。
 - `OPENCLI_BROWSER_COMMAND_TIMEOUT` 默认 180，可外部覆盖。
 - 非 dry-run 时，脚本在三源导入后按导入前的 candidate ID 快照清理本次新增数据：URL hostname 只要包含 `search.yahoo` 就移除，例如 `gr.search.yahoo.com`、`search.yahoo.co.jp`。历史候选不受影响；仅 URL path/query 含 `search.yahoo` 不过滤。
-- dry-run 不写候选文件，因此跳过上述落盘清理。
+- dry-run 不写候选文件，因此跳过上述落盘清理，也**不要** commit/push。
 - **EXIT trap 总会跑进程清理**（成功 / 失败 / Ctrl-C 都一样）：调用 `scripts/cleanup-processes.sh`。
+- **非 dry-run 导入完成后必须在 link-master 仓库 commit + push**（见下方专节）；批量多域名时等全部跑完再一次提交。
 
 以下三条底层命令仅用于单源调试，不包含本 skill 的导入后 `search.yahoo` 清理；标准导入必须使用 `import-all.sh`：
 
@@ -82,6 +84,35 @@ OPENCLI_BROWSER_COMMAND_TIMEOUT=180 node scripts/import-backlink-candidates.js <
 
 - `Fetched`：opencli 实际拉到数；`Imported`：过滤+去重后**新增写入**数（通常 < Fetched）。
 - 新候选原子写入 `backlink-candidates.json`；历史（按 domain **覆盖**）写入 `backlink-import-history.json`。
+
+## 导入完成后 commit + push（必须）
+
+非 dry-run 导入写盘后，**必须**在 **link-master** 仓库提交并推送数据变更，不要等用户再提醒。
+
+典型变更文件：
+
+- `data/json/backlink-candidates.json`
+- `data/json/backlink-import-history.json`
+
+```bash
+cd /Users/coderlim/Projects/link-master
+git status
+git add data/json/backlink-candidates.json data/json/backlink-import-history.json
+git commit -m "$(cat <<'EOF'
+Import backlink candidates for <domain-or-batch>.
+
+EOF
+)"
+git push
+```
+
+规则：
+
+- 仅在非 dry-run、且候选/历史文件确有变更时 commit；无变更则跳过。
+- 批量多域名：全部 `import-all.sh` 结束后**一次** commit + push，不要每个域名单独推。
+- 在 link-master 仓库操作，不要提交到 keyword-kits。
+- commit message 写清导入的域名（或「N domains batch」）；push 到当前跟踪的 remote 分支。
+- 进程清理与 commit/push 无关：先清理进程，再 commit/push（或并行无妨，但两者都要做完才算任务结束）。
 
 ## 任务结束后清理无用进程（必须）
 
