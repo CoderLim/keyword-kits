@@ -110,13 +110,16 @@ def parse_opencli_json(text: str) -> dict | None:
     return None
 
 
-def aitdk_get(domain: str, timeout: int = 60) -> dict | None:
-    r = subprocess.run(
-        ["opencli", "aitdk", "get-data", domain, "-f", "json"],
-        capture_output=True,
-        text=True,
-        timeout=timeout,
-    )
+def aitdk_get(domain: str, timeout: int = 90) -> dict | None:
+    try:
+        r = subprocess.run(
+            ["opencli", "aitdk", "get-data", domain, "-f", "json"],
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+        )
+    except subprocess.TimeoutExpired:
+        return {"_error": f"timeout after {timeout}s"}
     out = (r.stdout or "") + (r.stderr or "")
     data = parse_opencli_json(out)
     if not data:
