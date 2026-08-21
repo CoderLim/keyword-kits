@@ -1,0 +1,14 @@
+---
+description: Use the shared rotating-request library for HTTP 429 handling and proxy IP rotation
+alwaysApply: true
+---
+
+# HTTP 429 handling
+
+- When an HTTP request can receive `429 Too Many Requests`, use `packages/rotating-request`. Do not implement an ad hoc retry loop, fixed sleep, or QingGuo channel rewrite in an individual package.
+- **Python:** use `RotatingSession.from_env()` from `rotating_request`.
+- **TypeScript/Node:** use `RotatingClient.fromEnv()` from `@keyword-kits/rotating-request`; always call `await client.close()` when the client is no longer needed.
+- QingGuo automatic IP rotation requires `USE_PROXY=true`, `TUNNEL_PROXY_FORMAT=tagged`, and complete `TUNNEL_*` configuration.
+- Automatically replay only safe methods: `GET`, `HEAD`, and `OPTIONS`. Never automatically replay `POST`, `PUT`, `PATCH`, or `DELETE`.
+- If a third-party library converts a block into an exception—for example, `youtube-transcript-api` raises `RequestBlocked` or `IpBlocked`—use `run()` and explicitly select only the blocking exceptions that should rotate the proxy.
+- Read `packages/rotating-request/README.md` before changing retry, proxy, delay, or concurrency behavior.
