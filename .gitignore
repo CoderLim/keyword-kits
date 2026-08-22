@@ -3,6 +3,9 @@ node_modules/
 .DS_Store
 .worktrees/
 
+# keywords-daily-report local snapshots (yesterday + today only)
+.claude/skills/keywords-daily-report/data/
+
 # opencli 命令编译产物（由 npm run build 从 src/ 生成）
 packages/sim/backlinks.js
 packages/sim/landing-pages.js
